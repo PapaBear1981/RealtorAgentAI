@@ -1,0 +1,1872 @@
+<testsuites id="" name="" tests="450" failures="0" skipped="450" errors="0" time="0.17115600000000006">
+<testsuite name="admin.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="17" failures="0" skipped="17" time="0" errors="0">
+<testcase name="Admin Panel › should display admin panel interface" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display admin tabs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user management by default" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user roles and status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should select user and show details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should toggle user status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display templates tab" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display template information" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should change template status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display system configuration" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit logs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit log details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should save configuration changes" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should be responsive on mobile" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display help button with admin context" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should show placeholder when no user selected" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should maintain tab state during interactions" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Authentication Flow › should display homepage with get started button" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should navigate to login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show validation errors for empty form" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should successfully login with valid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should maintain session across page refreshes" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect authenticated user away from login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="contracts.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Contract Generator › should display contract generator interface" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display template selection" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should select template and navigate to variables tab" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display form fields for selected template" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should fill form and generate contract" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should validate required fields" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display contract preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should allow editing variables from preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should be responsive on mobile" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display help button with contract context" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Dashboard › should display dashboard with all widgets" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display quick action cards" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to documents page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to contracts page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to signatures page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display navigation with all menu items" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate between pages using navigation menu" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display user information in header" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should be responsive on mobile" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display help button" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="documents.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Document Intake › should display document intake interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should show drag and drop interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should handle file upload simulation" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display uploaded files section when files are present" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should be responsive on mobile" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display help button with document context" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should navigate back to dashboard" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should maintain authentication state" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="review.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="21" failures="0" skipped="21" time="0" errors="0">
+<testcase name="Contract Review › should display review interface" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review tabs" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display current version information" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display contract with changes highlighted" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display line numbers" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comments on lines" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comment replies" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should allow selecting lines for comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should add new comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should clear line selection" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display version history" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should switch between versions" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display all comments tab" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review summary" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display keyboard shortcut indicators on buttons" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should be responsive on mobile" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display help button with review context" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="signatures.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="chromium" tests="15" failures="0" skipped="15" time="0" errors="0">
+<testcase name="Signature Tracker › should display signature tracker interface" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signature requests list" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display progress bars for signature requests" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display party avatars and status" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should select signature request and show details" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signing parties in details panel" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show signed party information" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display send reminder button for pending parties" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should send reminder when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display action buttons" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should resend document when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show placeholder when no request selected" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should be responsive on mobile" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display help button with signature context" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should maintain selection across interactions" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="admin.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="17" failures="0" skipped="17" time="0" errors="0">
+<testcase name="Admin Panel › should display admin panel interface" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display admin tabs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user management by default" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user roles and status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should select user and show details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should toggle user status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display templates tab" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display template information" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should change template status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display system configuration" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit logs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit log details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should save configuration changes" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should be responsive on mobile" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display help button with admin context" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should show placeholder when no user selected" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should maintain tab state during interactions" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Authentication Flow › should display homepage with get started button" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should navigate to login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show validation errors for empty form" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should successfully login with valid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should maintain session across page refreshes" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect authenticated user away from login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="contracts.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Contract Generator › should display contract generator interface" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display template selection" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should select template and navigate to variables tab" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display form fields for selected template" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should fill form and generate contract" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should validate required fields" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display contract preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should allow editing variables from preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should be responsive on mobile" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display help button with contract context" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Dashboard › should display dashboard with all widgets" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display quick action cards" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to documents page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to contracts page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to signatures page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display navigation with all menu items" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate between pages using navigation menu" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display user information in header" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should be responsive on mobile" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display help button" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="documents.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Document Intake › should display document intake interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should show drag and drop interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should handle file upload simulation" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display uploaded files section when files are present" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should be responsive on mobile" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display help button with document context" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should navigate back to dashboard" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should maintain authentication state" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="review.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="21" failures="0" skipped="21" time="0" errors="0">
+<testcase name="Contract Review › should display review interface" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review tabs" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display current version information" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display contract with changes highlighted" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display line numbers" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comments on lines" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comment replies" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should allow selecting lines for comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should add new comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should clear line selection" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display version history" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should switch between versions" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display all comments tab" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review summary" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display keyboard shortcut indicators on buttons" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should be responsive on mobile" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display help button with review context" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="signatures.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="firefox" tests="15" failures="0" skipped="15" time="0" errors="0">
+<testcase name="Signature Tracker › should display signature tracker interface" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signature requests list" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display progress bars for signature requests" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display party avatars and status" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should select signature request and show details" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signing parties in details panel" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show signed party information" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display send reminder button for pending parties" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should send reminder when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display action buttons" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should resend document when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show placeholder when no request selected" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should be responsive on mobile" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display help button with signature context" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should maintain selection across interactions" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="admin.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="17" failures="0" skipped="17" time="0" errors="0">
+<testcase name="Admin Panel › should display admin panel interface" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display admin tabs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user management by default" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user roles and status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should select user and show details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should toggle user status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display templates tab" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display template information" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should change template status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display system configuration" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit logs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit log details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should save configuration changes" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should be responsive on mobile" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display help button with admin context" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should show placeholder when no user selected" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should maintain tab state during interactions" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Authentication Flow › should display homepage with get started button" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should navigate to login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show validation errors for empty form" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should successfully login with valid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should maintain session across page refreshes" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect authenticated user away from login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="contracts.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Contract Generator › should display contract generator interface" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display template selection" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should select template and navigate to variables tab" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display form fields for selected template" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should fill form and generate contract" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should validate required fields" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display contract preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should allow editing variables from preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should be responsive on mobile" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display help button with contract context" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Dashboard › should display dashboard with all widgets" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display quick action cards" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to documents page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to contracts page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to signatures page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display navigation with all menu items" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate between pages using navigation menu" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display user information in header" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should be responsive on mobile" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display help button" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="documents.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Document Intake › should display document intake interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should show drag and drop interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should handle file upload simulation" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display uploaded files section when files are present" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should be responsive on mobile" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display help button with document context" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should navigate back to dashboard" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should maintain authentication state" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="review.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="21" failures="0" skipped="21" time="0" errors="0">
+<testcase name="Contract Review › should display review interface" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review tabs" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display current version information" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display contract with changes highlighted" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display line numbers" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comments on lines" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comment replies" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should allow selecting lines for comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should add new comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should clear line selection" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display version history" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should switch between versions" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display all comments tab" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review summary" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display keyboard shortcut indicators on buttons" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should be responsive on mobile" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display help button with review context" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="signatures.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="webkit" tests="15" failures="0" skipped="15" time="0" errors="0">
+<testcase name="Signature Tracker › should display signature tracker interface" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signature requests list" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display progress bars for signature requests" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display party avatars and status" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should select signature request and show details" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signing parties in details panel" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show signed party information" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display send reminder button for pending parties" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should send reminder when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display action buttons" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should resend document when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show placeholder when no request selected" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should be responsive on mobile" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display help button with signature context" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should maintain selection across interactions" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="admin.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="17" failures="0" skipped="17" time="0" errors="0">
+<testcase name="Admin Panel › should display admin panel interface" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display admin tabs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user management by default" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user roles and status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should select user and show details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should toggle user status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display templates tab" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display template information" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should change template status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display system configuration" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit logs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit log details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should save configuration changes" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should be responsive on mobile" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display help button with admin context" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should show placeholder when no user selected" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should maintain tab state during interactions" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Authentication Flow › should display homepage with get started button" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should navigate to login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show validation errors for empty form" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should successfully login with valid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should maintain session across page refreshes" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect authenticated user away from login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="contracts.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Contract Generator › should display contract generator interface" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display template selection" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should select template and navigate to variables tab" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display form fields for selected template" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should fill form and generate contract" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should validate required fields" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display contract preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should allow editing variables from preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should be responsive on mobile" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display help button with contract context" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Dashboard › should display dashboard with all widgets" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display quick action cards" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to documents page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to contracts page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to signatures page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display navigation with all menu items" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate between pages using navigation menu" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display user information in header" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should be responsive on mobile" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display help button" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="documents.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Document Intake › should display document intake interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should show drag and drop interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should handle file upload simulation" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display uploaded files section when files are present" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should be responsive on mobile" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display help button with document context" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should navigate back to dashboard" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should maintain authentication state" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="review.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="21" failures="0" skipped="21" time="0" errors="0">
+<testcase name="Contract Review › should display review interface" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review tabs" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display current version information" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display contract with changes highlighted" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display line numbers" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comments on lines" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comment replies" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should allow selecting lines for comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should add new comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should clear line selection" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display version history" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should switch between versions" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display all comments tab" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review summary" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display keyboard shortcut indicators on buttons" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should be responsive on mobile" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display help button with review context" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="signatures.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Chrome" tests="15" failures="0" skipped="15" time="0" errors="0">
+<testcase name="Signature Tracker › should display signature tracker interface" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signature requests list" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display progress bars for signature requests" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display party avatars and status" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should select signature request and show details" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signing parties in details panel" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show signed party information" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display send reminder button for pending parties" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should send reminder when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display action buttons" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should resend document when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show placeholder when no request selected" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should be responsive on mobile" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display help button with signature context" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should maintain selection across interactions" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="admin.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="17" failures="0" skipped="17" time="0" errors="0">
+<testcase name="Admin Panel › should display admin panel interface" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display admin tabs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user management by default" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display user roles and status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should select user and show details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should toggle user status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display templates tab" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display template information" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should change template status" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display system configuration" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit logs" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display audit log details" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should save configuration changes" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should be responsive on mobile" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should display help button with admin context" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should show placeholder when no user selected" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Panel › should maintain tab state during interactions" classname="admin.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Authentication Flow › should display homepage with get started button" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should navigate to login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show validation errors for empty form" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should successfully login with valid credentials" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should maintain session across page refreshes" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Authentication Flow › should redirect authenticated user away from login page" classname="auth.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="contracts.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Contract Generator › should display contract generator interface" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display template selection" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should select template and navigate to variables tab" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display form fields for selected template" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should fill form and generate contract" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should validate required fields" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display contract preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should allow editing variables from preview" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should be responsive on mobile" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Generator › should display help button with contract context" classname="contracts.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Dashboard › should display dashboard with all widgets" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display quick action cards" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to documents page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to contracts page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate to signatures page from quick action" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display navigation with all menu items" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should navigate between pages using navigation menu" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display user information in header" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should be responsive on mobile" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dashboard › should display help button" classname="dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="documents.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Document Intake › should display document intake interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should show drag and drop interface" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should handle file upload simulation" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display uploaded files section when files are present" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should be responsive on mobile" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should display help button with document context" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should navigate back to dashboard" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Document Intake › should maintain authentication state" classname="documents.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="review.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="21" failures="0" skipped="21" time="0" errors="0">
+<testcase name="Contract Review › should display review interface" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review tabs" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display current version information" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display contract with changes highlighted" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display line numbers" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comments on lines" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display comment replies" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should allow selecting lines for comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should add new comments" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should clear line selection" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display version history" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should switch between versions" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display all comments tab" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display review summary" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with keyboard shortcut" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should approve version with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should request changes with button" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display keyboard shortcut indicators on buttons" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should be responsive on mobile" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Contract Review › should display help button with review context" classname="review.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="signatures.spec.ts" timestamp="2025-08-02T19:05:10.161Z" hostname="Mobile Safari" tests="15" failures="0" skipped="15" time="0" errors="0">
+<testcase name="Signature Tracker › should display signature tracker interface" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signature requests list" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display progress bars for signature requests" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display party avatars and status" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should select signature request and show details" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display signing parties in details panel" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show signed party information" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display send reminder button for pending parties" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should send reminder when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display action buttons" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should resend document when button clicked" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should show placeholder when no request selected" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should be responsive on mobile" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should display help button with signature context" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Signature Tracker › should maintain selection across interactions" classname="signatures.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

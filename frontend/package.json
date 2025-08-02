@@ -15,6 +15,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
     "clean": "rm -rf .next out dist",
     "analyze": "cross-env ANALYZE=true next build",
     "storybook": "storybook dev -p 6006",
@@ -66,6 +71,7 @@
     "zustand": "5.0.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@storybook/addon-essentials": "8.4.7",
     "@storybook/addon-interactions": "8.4.7",
     "@storybook/addon-links": "8.4.7",

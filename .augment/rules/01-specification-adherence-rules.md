@@ -1,3 +1,7 @@
+---
+type: "manual"
+---
+
 # Specification Adherence Rules
 
 ## Purpose
@@ -17,7 +21,7 @@ These rules ensure strict adherence to the Multi-Agent Real-Estate Contract Plat
 
 ### 3. Scope Change Management
 - **RULE**: No features outside the specification without explicit approval
-- **PROCESS**: 
+- **PROCESS**:
   1. Document the proposed change
   2. Explain why it's necessary
   3. Get user approval before implementation
