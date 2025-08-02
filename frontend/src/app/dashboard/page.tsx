@@ -1,5 +1,4 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
-import { HelpButton } from "@/components/help/HelpButton"
 import { Navigation } from "@/components/layout/Navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -173,7 +172,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-      <HelpButton context={{ page: 'Dashboard' }} />
     </div>
     </ProtectedRoute>
   )
