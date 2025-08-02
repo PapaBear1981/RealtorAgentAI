@@ -192,6 +192,41 @@ Rules should evolve based on:
 - Consistent code quality metrics
 - Smooth integration and deployment processes
 
+## Automated Development Foundation ⭐ NEW
+
+### 6. [Automated Development Tools](./06-automated-development-tools.md)
+**Purpose**: Comprehensive reference for all automated development tools and workflows
+**Key Areas**:
+- Code quality automation (Black, ESLint, MyPy, Prettier, etc.)
+- VS Code integration and debugging configurations
+- CI/CD pipeline with GitHub Actions
+- Development utilities and troubleshooting
+- Quality gates and enforcement mechanisms
+
+**When to Use**: Daily development, environment setup, troubleshooting, and quality assurance
+
+### Quick Development Commands
+```bash
+# Essential daily commands
+make dev          # Start development environment
+make status       # Check environment status
+make test         # Run all tests
+make quality      # Run all quality checks
+make format       # Format all code
+
+# Environment management
+python scripts/setup_dev_env.py      # Initial setup
+python scripts/dev_utils.py status   # Comprehensive status
+```
+
+### Automated Quality Assurance
+The development foundation now provides:
+- ✅ **Code Quality**: Automatic formatting, linting, and type checking
+- ✅ **Testing**: Automated test execution and coverage reporting
+- ✅ **CI/CD**: GitHub Actions for quality assurance and deployment
+- ✅ **Development Tools**: VS Code configuration and debugging setup
+- ✅ **Task Verification**: Automated task list compliance checking
+
 ## Getting Started
 
 1. **Read all rule files** to understand the complete framework

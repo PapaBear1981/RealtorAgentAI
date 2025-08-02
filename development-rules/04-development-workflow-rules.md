@@ -34,21 +34,24 @@ Guidelines for maintaining consistency and quality throughout the development pr
 - [ ] Plan testing approach and acceptance criteria
 
 ### 2. Environment Preparation
-- [ ] Development environment is clean and up-to-date
-- [ ] All dependencies are current and compatible
+- [ ] Virtual environment is activated (`.venv/Scripts/activate`)
+- [ ] Development services are running (`make dev` or `docker-compose up -d`)
+- [ ] Service health check passes (`make health`)
+- [ ] All dependencies are current (`make install`)
 - [ ] Database is in known good state
-- [ ] Testing framework is configured and working
-- [ ] Documentation tools are available
+- [ ] VS Code is configured with project settings
 
-### 3. Code Quality Setup
-- [ ] Linting rules are configured and active
-- [ ] Type checking is enabled (TypeScript/Python typing)
-- [ ] Code formatting is consistent
-- [ ] Git hooks are configured for quality checks
+### 3. Automated Quality Setup (Pre-configured)
+- [x] Pre-commit hooks installed and active (automatic)
+- [x] Python tools: Black, isort, flake8, mypy, bandit (automatic)
+- [x] TypeScript tools: ESLint, Prettier (automatic)
+- [x] Additional tools: YAML lint, secrets detection, Docker lint (automatic)
+- [x] Task list verification system active (automatic)
+- [x] CI/CD pipeline validates all changes (automatic)
 
 ## Development Process
 
-### 1. Implementation Workflow
+### 1. Modern Implementation Workflow
 ```
 1. Research Phase
    ├── Use Context7 for latest documentation
@@ -57,27 +60,62 @@ Guidelines for maintaining consistency and quality throughout the development pr
 
 2. Planning Phase
    ├── Break down feature into tasks (~20 min each)
+   ├── Update task list using Augment tools
    ├── Identify integration points and dependencies
    └── Plan testing strategy
 
 3. Implementation Phase
+   ├── Activate virtual environment (.venv/Scripts/activate)
+   ├── Start development services (make dev)
    ├── Write failing tests first (TDD when appropriate)
    ├── Implement minimum viable feature
-   ├── Refactor for quality and maintainability
-   └── Ensure all tests pass
+   ├── Code quality enforced automatically (pre-commit hooks)
+   └── Ensure all tests pass (make test)
 
 4. Integration Phase
    ├── Test integration points
    ├── Validate against specification
+   ├── Run quality checks (make quality)
    └── Update documentation
 
 5. Review Phase
    ├── Self-review against quality standards
-   ├── Run full test suite
-   └── Mark task complete
+   ├── Task list verification (automatic on commit)
+   ├── CI/CD pipeline validation (automatic)
+   └── Mark task complete using Augment tools
 ```
 
-### 2. Code Quality Standards
+### 2. Automated Development Tools
+
+#### Code Quality Automation (Pre-configured)
+- **Python Formatting**: Black (88 char line length) - automatic on save/commit
+- **Python Import Sorting**: isort (Black profile) - automatic organization
+- **Python Linting**: Flake8 with custom rules - automatic validation
+- **Python Type Checking**: MyPy with strict settings - automatic type validation
+- **Python Security**: Bandit security linting - automatic vulnerability detection
+- **TypeScript/JavaScript**: ESLint + Prettier - automatic formatting and linting
+- **Secrets Detection**: detect-secrets - automatic credential scanning
+- **YAML/Docker**: Specialized linting - automatic configuration validation
+
+#### Development Commands (Available via Makefile)
+```bash
+make dev          # Start all development services
+make test         # Run all tests (backend + frontend)
+make quality      # Run all code quality checks
+make format       # Format all code
+make lint         # Run all linting
+make clean        # Clean build artifacts
+make status       # Check development environment status
+```
+
+#### VS Code Integration (Pre-configured)
+- **F5**: Start debugging FastAPI backend
+- **Ctrl+Shift+P**: Access 15+ custom development tasks
+- **Auto-save**: Automatic formatting and linting on save
+- **Extensions**: 30+ productivity extensions pre-configured
+- **Debugging**: Full-stack debugging configurations ready
+
+### 3. Code Quality Standards
 
 #### Frontend Code Quality
 - **Components**: Single responsibility, reusable, well-typed
@@ -99,17 +137,25 @@ Guidelines for maintaining consistency and quality throughout the development pr
 - **Models**: Proper routing, cost management, performance monitoring
 - **Integration**: Robust error handling, timeout management
 
-### 3. Testing Requirements
+### 4. Automated Testing Requirements
 
 #### Test Categories (All Required)
 - **Unit Tests**: Individual functions and components
+  - Backend: `pytest backend/tests/` (automatic in CI)
+  - Frontend: `npm test` (automatic in CI)
 - **Integration Tests**: API endpoints and database interactions
+  - Backend: `pytest backend/tests/integration/` (automatic in CI)
 - **Component Tests**: Frontend component behavior
-- **End-to-End Tests**: Complete user workflows
-- **Performance Tests**: Load and response time validation
+  - Frontend: Jest + React Testing Library (automatic in CI)
+- **End-to-End Tests**: Complete user workflows (planned)
+- **Performance Tests**: Load and response time validation (planned)
 
-#### Test Quality Standards
-- **Coverage**: Minimum 80% code coverage
+#### Automated Test Quality Standards
+- **Coverage**: Minimum 80% code coverage (enforced in CI)
+- **Backend**: pytest with coverage reporting to Codecov
+- **Frontend**: Jest with coverage reporting
+- **CI Integration**: All tests run automatically on every PR
+- **Quality Gates**: Tests must pass before merge
 - **Scenarios**: Happy path, error cases, edge cases
 - **Data**: Realistic test data, proper fixtures
 - **Isolation**: Tests don't depend on each other
