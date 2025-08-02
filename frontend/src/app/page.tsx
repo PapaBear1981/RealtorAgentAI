@@ -1,3 +1,6 @@
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -8,6 +11,15 @@ export default function HomePage() {
         <p className="text-xl text-center text-muted-foreground mb-8">
           Multi-Agent Real Estate Contract Platform
         </p>
+
+        <div className="flex justify-center mb-12">
+          <Link href="/login">
+            <Button size="lg">
+              Get Started
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
           <div className="p-6 border rounded-lg">
             <h2 className="text-lg font-semibold mb-2">Document Intake</h2>

@@ -1,6 +1,6 @@
+import type { AuthState, User } from '@/types'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, AuthState } from '@/types'
 
 interface AuthStore extends AuthState {
   // Actions
@@ -25,27 +25,30 @@ export const useAuthStore = create<AuthStore>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true })
         try {
+          // Mock authentication for demo purposes
           // TODO: Replace with actual API call
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-          })
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
 
-          if (!response.ok) {
-            throw new Error('Login failed')
+          if (email === 'admin@example.com' && password === 'password') {
+            const mockUser: User = {
+              id: '1',
+              email: 'admin@example.com',
+              name: 'Admin User',
+              role: 'admin',
+              created_at: new Date().toISOString(),
+            }
+
+            const mockToken = 'mock-jwt-token-' + Date.now()
+
+            set({
+              user: mockUser,
+              token: mockToken,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+          } else {
+            throw new Error('Invalid credentials')
           }
-
-          const data = await response.json()
-          
-          set({
-            user: data.user,
-            token: data.access_token,
-            isAuthenticated: true,
-            isLoading: false,
-          })
         } catch (error) {
           set({ isLoading: false })
           throw error
@@ -62,9 +65,9 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setUser: (user: User | null) => {
-        set({ 
-          user, 
-          isAuthenticated: !!user 
+        set({
+          user,
+          isAuthenticated: !!user
         })
       },
 
