@@ -1,0 +1,196 @@
+# Multi-Agent Real-Estate Contract Platform - Development Environment
+# Docker Compose configuration for local development
+# Includes: FastAPI backend, Next.js frontend, Redis, MinIO, SQLite
+
+version: '3.8'
+
+services:
+  # ===== DATABASE =====
+  # SQLite is used in development (file-based, no container needed)
+  # Database file will be mounted as volume in backend service
+
+  # ===== CACHE & MESSAGE BROKER =====
+  redis:
+    image: redis:7-alpine
+    container_name: realestate-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - realestate-network
+
+  # ===== OBJECT STORAGE =====
+  minio:
+    image: minio/minio:latest
+    container_name: realestate-minio
+    ports:
+      - "9000:9000"      # API port
+      - "9001:9001"      # Console port
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - realestate-network
+
+  # ===== BACKEND API =====
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: realestate-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Database
+      DATABASE_URL: sqlite:///./database.db
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      # MinIO/S3
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: realestate-files
+      S3_REGION: us-east-1
+      
+      # JWT
+      JWT_SECRET_KEY: dev-secret-key-change-in-production
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      
+      # FastAPI
+      FASTAPI_ENV: development
+      FASTAPI_DEBUG: "true"
+      FASTAPI_RELOAD: "true"
+      
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      
+      # AI/LLM
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      
+      # Logging
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./backend:/app
+      - ./database:/app/database
+      - ./uploads:/app/uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - realestate-network
+    restart: unless-stopped
+
+  # ===== CELERY WORKER =====
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: realestate-celery-worker
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      # Same environment as backend
+      DATABASE_URL: sqlite:///./database.db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: realestate-files
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./backend:/app
+      - ./database:/app/database
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - realestate-network
+    restart: unless-stopped
+
+  # ===== CELERY FLOWER (Monitoring) =====
+  celery-flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: realestate-celery-flower
+    command: celery -A app.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - realestate-network
+    restart: unless-stopped
+
+  # ===== FRONTEND =====
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: realestate-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Next.js
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_APP_NAME: "Real Estate Contract Platform"
+      
+      # Development
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - realestate-network
+    restart: unless-stopped
+
+# ===== VOLUMES =====
+volumes:
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+# ===== NETWORKS =====
+networks:
+  realestate-network:
+    driver: bridge
+    name: realestate-network
