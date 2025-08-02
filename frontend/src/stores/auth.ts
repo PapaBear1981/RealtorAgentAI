@@ -2,6 +2,35 @@ import type { AuthState, User } from '@/types'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+// Cookie storage implementation for Zustand persist
+const cookieStorage = {
+  getItem: (name: string) => {
+    if (typeof document === 'undefined') return null
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) {
+      const cookieValue = parts.pop()?.split(';').shift() || null
+      if (cookieValue) {
+        try {
+          return JSON.parse(decodeURIComponent(cookieValue))
+        } catch {
+          return null
+        }
+      }
+    }
+    return null
+  },
+  setItem: (name: string, value: any): void => {
+    if (typeof document === 'undefined') return
+    const encodedValue = encodeURIComponent(JSON.stringify(value))
+    document.cookie = `${name}=${encodedValue}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
+  },
+  removeItem: (name: string): void => {
+    if (typeof document === 'undefined') return
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`
+  },
+}
+
 interface AuthStore extends AuthState {
   // Actions
   login: (email: string, password: string) => Promise<void>
@@ -81,7 +110,12 @@ export const useAuthStore = create<AuthStore>()(
 
       checkAuth: async () => {
         const { token, user } = get()
+
+        // Debug logging
+        console.log('checkAuth called:', { token: !!token, user: !!user, tokenPrefix: token?.substring(0, 20) })
+
         if (!token) {
+          console.log('No token found, clearing auth state')
           set({ isAuthenticated: false, user: null })
           return
         }
@@ -91,6 +125,7 @@ export const useAuthStore = create<AuthStore>()(
           // For mock authentication, validate the token format and restore user
           if (token.startsWith('mock-jwt-token-') && user) {
             // Token is valid and we have user data, restore the session
+            console.log('Valid session found, restoring authentication')
             set({
               user,
               isAuthenticated: true,
@@ -98,6 +133,7 @@ export const useAuthStore = create<AuthStore>()(
             })
           } else {
             // Invalid token or missing user data, clear session
+            console.log('Invalid session data, clearing auth state')
             throw new Error('Invalid session data')
           }
 
@@ -119,6 +155,7 @@ export const useAuthStore = create<AuthStore>()(
           //   isLoading: false,
           // })
         } catch (error) {
+          console.log('checkAuth error:', error)
           set({
             user: null,
             token: null,
@@ -130,11 +167,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      storage: cookieStorage,
     }
   )
 )
