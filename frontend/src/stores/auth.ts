@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       checkAuth: async () => {
-        const { token } = get()
+        const { token, user } = get()
         if (!token) {
           set({ isAuthenticated: false, user: null })
           return
@@ -88,23 +88,36 @@ export const useAuthStore = create<AuthStore>()(
 
         set({ isLoading: true })
         try {
-          // TODO: Replace with actual API call
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          })
-
-          if (!response.ok) {
-            throw new Error('Auth check failed')
+          // For mock authentication, validate the token format and restore user
+          if (token.startsWith('mock-jwt-token-') && user) {
+            // Token is valid and we have user data, restore the session
+            set({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+          } else {
+            // Invalid token or missing user data, clear session
+            throw new Error('Invalid session data')
           }
 
-          const user = await response.json()
-          set({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-          })
+          // TODO: Replace with actual API call when backend is ready
+          // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
+          //   headers: {
+          //     'Authorization': `Bearer ${token}`,
+          //   },
+          // })
+          //
+          // if (!response.ok) {
+          //   throw new Error('Auth check failed')
+          // }
+          //
+          // const user = await response.json()
+          // set({
+          //   user,
+          //   isAuthenticated: true,
+          //   isLoading: false,
+          // })
         } catch (error) {
           set({
             user: null,

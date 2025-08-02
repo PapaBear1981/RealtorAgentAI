@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/stores/auth"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -14,8 +14,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   const { user, isAuthenticated, isLoading, checkAuth } = useAuthStore()
 
   useEffect(() => {
-    // Check authentication status on mount
-    if (!isAuthenticated && !isLoading) {
+    // Check authentication status on mount only if we don't have a token
+    // The AuthInitializer component handles the initial auth check
+    const { token } = useAuthStore.getState()
+    if (!isAuthenticated && !isLoading && token) {
       checkAuth()
     }
   }, [isAuthenticated, isLoading, checkAuth])

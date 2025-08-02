@@ -1,3 +1,4 @@
+import { AuthInitializer } from "@/components/auth/AuthInitializer"
 import { AuthenticatedAssistantAgent } from "@/components/help/AuthenticatedAssistantAgent"
 import { Toaster } from "@/components/ui/toaster"
 import "@/styles/globals.css"
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <div className="min-h-screen bg-background font-sans antialiased">
+          <AuthInitializer />
           {children}
           <AuthenticatedAssistantAgent />
           <Toaster />
