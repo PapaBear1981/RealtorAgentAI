@@ -1,4 +1,5 @@
 import { useAssistantAgentStore } from '@/stores/helpAgentStore'
+import { generateUniqueId } from '@/utils/idGenerator'
 
 export interface ActionRequest {
   type: 'contract_fill' | 'document_extract' | 'signature_send' | 'review_request' | 'file_search'
@@ -24,8 +25,8 @@ class AssistantAgentService {
   private store = useAssistantAgentStore
 
   async executeAction(request: ActionRequest): Promise<ActionResult> {
-    const actionId = Date.now().toString()
-    
+    const actionId = generateUniqueId('action')
+
     // Add action to store
     this.store.getState().addAction({
       type: request.type,
@@ -103,7 +104,7 @@ class AssistantAgentService {
       this.store.getState().updateAction(actionId, {
         progress: step.progress
       })
-      
+
       // Add progress message
       this.store.getState().addMessage({
         type: 'system',
@@ -130,7 +131,7 @@ class AssistantAgentService {
         contractType,
         filledFields: contractData,
         sourceFiles,
-        contractId: `contract_${Date.now()}`
+        contractId: generateUniqueId('contract')
       }
     }
   }
@@ -204,7 +205,7 @@ class AssistantAgentService {
     return {
       success: true,
       data: {
-        signatureRequestId: `sig_${Date.now()}`,
+        signatureRequestId: generateUniqueId('sig'),
         recipients: recipients || ['buyer@email.com', 'seller@email.com'],
         status: 'sent',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -232,7 +233,7 @@ class AssistantAgentService {
     return {
       success: true,
       data: {
-        reviewId: `review_${Date.now()}`,
+        reviewId: generateUniqueId('review'),
         status: 'pending_review',
         assignedTo: 'Legal Team',
         estimatedCompletion: '2-3 business days'
@@ -291,7 +292,7 @@ class AssistantAgentService {
     if (lowerCommand.includes('fill') && (lowerCommand.includes('contract') || lowerCommand.includes('agreement'))) {
       const contractType = this.extractContractType(command)
       const sourceFiles = this.extractSourceFiles(command)
-      
+
       return {
         type: 'contract_fill',
         description: `Fill out ${contractType} using information from ${sourceFiles.join(', ')}`,

@@ -1,3 +1,4 @@
+import { generateUniqueId } from '@/utils/idGenerator'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -55,7 +56,7 @@ export const useAssistantAgentStore = create<AssistantAgentState>()(
       isOpen: false,
       messages: [
         {
-          id: '1',
+          id: generateUniqueId(),
           type: 'agent',
           content: `Hello! I'm your AI Assistant Agent for real estate contracts. I can actively help you by performing tasks on your behalf.
 
@@ -88,7 +89,7 @@ Just tell me what you'd like me to do! For example: "Fill out the Purchase Agree
       addMessage: (message) => {
         const newMessage: Message = {
           ...message,
-          id: Date.now().toString(),
+          id: generateUniqueId(),
           timestamp: new Date().toISOString()
         }
         set((state) => ({
@@ -107,7 +108,7 @@ Just tell me what you'd like me to do! For example: "Fill out the Purchase Agree
 
         if (lastMessage && lastMessage.context !== context.page) {
           const contextMessage: Message = {
-            id: (Date.now() + 1).toString(),
+            id: generateUniqueId(),
             type: 'agent',
             content: `I can see you're now on the ${context.page} page${context.documentName ? ` working on "${context.documentName}"` : ''}.
 
@@ -127,7 +128,7 @@ What would you like me to help you accomplish here?`,
       addAction: (action) => {
         const newAction: AgentAction = {
           ...action,
-          id: Date.now().toString()
+          id: generateUniqueId()
         }
         set((state) => ({
           currentActions: [...state.currentActions, newAction]
@@ -151,7 +152,7 @@ What would you like me to help you accomplish here?`,
       clearMessages: () => set({
         messages: [
           {
-            id: '1',
+            id: generateUniqueId(),
             type: 'agent',
             content: `Hello! I'm your AI Assistant Agent for real estate contracts. I can actively help you by performing tasks on your behalf.
 
