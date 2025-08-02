@@ -302,13 +302,23 @@ Based on your current context${context?.documentName ? ` working on "${context.d
                   key={action.id}
                   variant="outline"
                   size="sm"
-                  className="text-left h-auto p-2"
+                  className="text-left h-auto p-2 min-h-[60px] w-full"
                   onClick={() => handleQuickAction(action)}
                   disabled={isLoading}
                 >
-                  <div>
-                    <div className="font-medium text-xs">{action.label}</div>
-                    <div className="text-xs text-gray-500 mt-1">{action.description}</div>
+                  <div className="w-full overflow-hidden">
+                    <div className="font-medium text-xs truncate">{action.label}</div>
+                    <div
+                      className="text-xs text-gray-500 mt-1 leading-tight"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {action.description}
+                    </div>
                   </div>
                 </Button>
               ))}
