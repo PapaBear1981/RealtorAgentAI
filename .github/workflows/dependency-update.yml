@@ -1,0 +1,178 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  update-python-dependencies:
+    name: Update Python Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-tools
+        run: pip install pip-tools
+
+      - name: Update requirements-dev.txt
+        run: |
+          pip-compile --upgrade requirements-dev.in || echo "No requirements-dev.in found"
+
+      - name: Update backend requirements
+        run: |
+          cd backend
+          pip-compile --upgrade requirements.in || echo "No requirements.in found"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update Python dependencies'
+          title: 'chore: update Python dependencies'
+          body: |
+            ## Automated Python Dependency Update
+            
+            This PR updates Python dependencies to their latest compatible versions.
+            
+            ### Changes
+            - Updated requirements files with latest compatible versions
+            - Automated security and compatibility updates
+            
+            ### Testing
+            - [ ] All CI checks pass
+            - [ ] Manual testing of critical functionality
+            
+            ### Notes
+            Please review the changes and test thoroughly before merging.
+          branch: chore/update-python-dependencies
+          delete-branch: true
+
+  update-node-dependencies:
+    name: Update Node.js Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Update frontend dependencies
+        run: |
+          cd frontend
+          npx npm-check-updates -u
+          npm install
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update Node.js dependencies'
+          title: 'chore: update Node.js dependencies'
+          body: |
+            ## Automated Node.js Dependency Update
+            
+            This PR updates Node.js dependencies to their latest compatible versions.
+            
+            ### Changes
+            - Updated package.json with latest compatible versions
+            - Updated package-lock.json
+            - Automated security and compatibility updates
+            
+            ### Testing
+            - [ ] All CI checks pass
+            - [ ] Frontend builds successfully
+            - [ ] Manual testing of critical functionality
+            
+            ### Notes
+            Please review the changes and test thoroughly before merging.
+          branch: chore/update-nodejs-dependencies
+          delete-branch: true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Python security audit
+        run: |
+          pip install safety
+          safety check -r backend/requirements.txt --json --output python-security-audit.json || true
+
+      - name: Node.js security audit
+        run: |
+          cd frontend
+          npm audit --audit-level=moderate --json > nodejs-security-audit.json || true
+
+      - name: Upload security audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-reports
+          path: |
+            python-security-audit.json
+            frontend/nodejs-security-audit.json
+
+      - name: Check for high severity vulnerabilities
+        run: |
+          # Check Python vulnerabilities
+          if [ -f python-security-audit.json ]; then
+            HIGH_VULN=$(jq '.vulnerabilities | length' python-security-audit.json 2>/dev/null || echo "0")
+            if [ "$HIGH_VULN" -gt 0 ]; then
+              echo "⚠️ Found $HIGH_VULN Python vulnerabilities"
+            fi
+          fi
+          
+          # Check Node.js vulnerabilities
+          if [ -f frontend/nodejs-security-audit.json ]; then
+            HIGH_VULN=$(jq '.metadata.vulnerabilities.high // 0' frontend/nodejs-security-audit.json 2>/dev/null || echo "0")
+            CRITICAL_VULN=$(jq '.metadata.vulnerabilities.critical // 0' frontend/nodejs-security-audit.json 2>/dev/null || echo "0")
+            if [ "$HIGH_VULN" -gt 0 ] || [ "$CRITICAL_VULN" -gt 0 ]; then
+              echo "⚠️ Found $HIGH_VULN high and $CRITICAL_VULN critical Node.js vulnerabilities"
+            fi
+          fi

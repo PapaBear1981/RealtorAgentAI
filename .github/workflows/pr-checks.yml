@@ -1,0 +1,303 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  # Skip if draft PR
+  check-draft:
+    name: Check if Draft PR
+    runs-on: ubuntu-latest
+    outputs:
+      is-draft: ${{ steps.check.outputs.is-draft }}
+    steps:
+      - name: Check if PR is draft
+        id: check
+        run: |
+          if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
+            echo "is-draft=true" >> $GITHUB_OUTPUT
+          else
+            echo "is-draft=false" >> $GITHUB_OUTPUT
+          fi
+
+  # PR Title and Description Check
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is-draft == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+          requireScope: false
+          disallowScopes: |
+            release
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+
+      - name: Check PR description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            if (!pr.body || pr.body.trim().length < 10) {
+              core.setFailed('PR description is too short. Please provide a meaningful description.');
+            }
+
+  # Task List Verification for PRs
+  task-list-check:
+    name: Task List Updated Check
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is-draft == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install verification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install detect-secrets
+
+      - name: Check if code files changed
+        id: code-changes
+        run: |
+          # Check if any code files were changed
+          CODE_EXTENSIONS="\.py$|\.js$|\.jsx$|\.ts$|\.tsx$|\.vue$|\.go$|\.rs$|\.java$|\.cpp$|\.c$"
+          CONFIG_FILES="docker-compose\.yml|Dockerfile|package\.json|requirements\.txt|pyproject\.toml"
+          
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E "($CODE_EXTENSIONS|$CONFIG_FILES)"; then
+            echo "code-changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "code-changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if task list was updated
+        id: task-list-changes
+        if: steps.code-changes.outputs.code-changed == 'true'
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep "MASTER_TASK_LIST.md"; then
+            echo "task-list-updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "task-list-updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify task list compliance
+        if: steps.code-changes.outputs.code-changed == 'true'
+        run: python scripts/verify_tasklist.py
+
+      - name: Comment on PR if task list not updated
+        if: steps.code-changes.outputs.code-changed == 'true' && steps.task-list-changes.outputs.task-list-updated == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚠️ **Task List Update Required**
+              
+              This PR contains code changes but the \`MASTER_TASK_LIST.md\` was not updated.
+              
+              Please:
+              1. Update your task progress using Augment's task management tools
+              2. Update completion metrics in MASTER_TASK_LIST.md
+              3. Add recent accomplishments with commit references
+              4. Commit the updated task list
+              
+              This ensures proper progress tracking and project visibility.`
+            })
+
+  # Code Quality Gate
+  quality-gate:
+    name: Code Quality Gate
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is-draft == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Install Node.js dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run pre-commit hooks
+        run: |
+          pre-commit install
+          pre-commit run --all-files
+
+  # Size and Complexity Check
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is-draft == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const changedFiles = pr.changed_files;
+            
+            let size = 'small';
+            let message = '';
+            
+            if (additions + deletions > 1000 || changedFiles > 20) {
+              size = 'large';
+              message = `⚠️ **Large PR Detected**
+              
+              This PR has ${additions} additions, ${deletions} deletions across ${changedFiles} files.
+              
+              Consider:
+              - Breaking this into smaller, focused PRs
+              - Ensuring adequate testing coverage
+              - Providing detailed description and context
+              `;
+            } else if (additions + deletions > 500 || changedFiles > 10) {
+              size = 'medium';
+              message = `📊 **Medium-sized PR**
+              
+              This PR has ${additions} additions, ${deletions} deletions across ${changedFiles} files.
+              
+              Please ensure:
+              - Adequate test coverage
+              - Clear description of changes
+              - Proper task list updates
+              `;
+            }
+            
+            if (message) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            }
+
+  # Auto-assign reviewers based on changed files
+  assign-reviewers:
+    name: Auto-assign Reviewers
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is-draft == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Auto-assign reviewers
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const changedFiles = files.map(file => file.filename);
+            let reviewers = [];
+            
+            // Add logic to assign reviewers based on changed files
+            // This is a placeholder - customize based on your team structure
+            
+            const hasBackendChanges = changedFiles.some(file => file.startsWith('backend/'));
+            const hasFrontendChanges = changedFiles.some(file => file.startsWith('frontend/'));
+            const hasAIChanges = changedFiles.some(file => file.startsWith('ai-agents/'));
+            const hasInfraChanges = changedFiles.some(file => 
+              file.includes('docker') || file.includes('.yml') || file.includes('.yaml')
+            );
+            
+            // Add appropriate reviewers based on changes
+            // Note: Replace with actual GitHub usernames
+            if (hasBackendChanges) {
+              // reviewers.push('backend-expert');
+            }
+            if (hasFrontendChanges) {
+              // reviewers.push('frontend-expert');
+            }
+            if (hasAIChanges) {
+              // reviewers.push('ai-expert');
+            }
+            if (hasInfraChanges) {
+              // reviewers.push('devops-expert');
+            }
+            
+            // For now, just add a comment about the changes
+            let changesSummary = 'Changes detected in:\n';
+            if (hasBackendChanges) changesSummary += '- Backend\n';
+            if (hasFrontendChanges) changesSummary += '- Frontend\n';
+            if (hasAIChanges) changesSummary += '- AI Agents\n';
+            if (hasInfraChanges) changesSummary += '- Infrastructure\n';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🔍 **Automated PR Analysis**\n\n${changesSummary}\nPlease ensure appropriate reviewers are assigned.`
+            });
