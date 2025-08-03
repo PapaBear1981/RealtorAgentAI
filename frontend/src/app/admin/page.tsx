@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,13 @@ interface User {
   createdAt: string
 }
 
+interface TemplateVersion {
+  id: string
+  version: string
+  createdAt: string
+  author: string
+}
+
 interface Template {
   id: string
   name: string
@@ -32,6 +39,7 @@ interface Template {
   lastModified: string
   author: string
   usageCount: number
+  versions: TemplateVersion[]
 }
 
 interface AuditLog {
@@ -83,7 +91,11 @@ const MOCK_TEMPLATES: Template[] = [
     status: 'active',
     lastModified: '2024-01-15T12:00:00Z',
     author: 'Admin User',
-    usageCount: 45
+    usageCount: 45,
+    versions: [
+      { id: 'v1', version: '2.0', createdAt: '2023-12-01T00:00:00Z', author: 'Admin User' },
+      { id: 'v2', version: '2.1', createdAt: '2024-01-15T12:00:00Z', author: 'Admin User' }
+    ]
   },
   {
     id: '2',
@@ -93,7 +105,11 @@ const MOCK_TEMPLATES: Template[] = [
     status: 'active',
     lastModified: '2024-01-10T09:30:00Z',
     author: 'Admin User',
-    usageCount: 32
+    usageCount: 32,
+    versions: [
+      { id: 'v1', version: '1.7', createdAt: '2023-11-15T00:00:00Z', author: 'Admin User' },
+      { id: 'v2', version: '1.8', createdAt: '2024-01-10T09:30:00Z', author: 'Admin User' }
+    ]
   }
 ]
 
@@ -118,13 +134,37 @@ const MOCK_AUDIT_LOGS: AuditLog[] = [
   }
 ]
 
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ['manage_users', 'manage_templates', 'view_audit', 'configure_system'],
+  agent: ['create_contracts', 'upload_documents'],
+  tc: ['manage_deals', 'send_signatures'],
+  signer: ['sign_documents']
+}
+
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>(MOCK_USERS)
   const [templates, setTemplates] = useState<Template[]>(MOCK_TEMPLATES)
   const [auditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [isEditingUser, setIsEditingUser] = useState(false)
+  const [selectedUserRole, setSelectedUserRole] = useState<string>()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [modelRoutes, setModelRoutes] = useState([{ id: 'primary', model: 'gpt-4', weight: 100 }])
+  const [temperature, setTemperature] = useState(0.7)
+  const [tokenLimit, setTokenLimit] = useState(4000)
+  const [metrics, setMetrics] = useState({ cpu: 0, memory: 0 })
+  const [openTemplate, setOpenTemplate] = useState<string | null>(null)
   const { toast } = useToast()
+
+  const refreshMetrics = () => {
+    setMetrics({
+      cpu: Math.floor(Math.random() * 100),
+      memory: Math.floor(Math.random() * 100)
+    })
+  }
+
+  useEffect(() => {
+    refreshMetrics()
+  }, [])
 
   const handleUserStatusToggle = (userId: string) => {
     setUsers(prev => prev.map(user => 
@@ -140,8 +180,8 @@ export default function AdminPage() {
   }
 
   const handleTemplateStatusChange = (templateId: string, newStatus: 'active' | 'draft' | 'archived') => {
-    setTemplates(prev => prev.map(template => 
-      template.id === templateId 
+    setTemplates(prev => prev.map(template =>
+      template.id === templateId
         ? { ...template, status: newStatus }
         : template
     ))
@@ -150,6 +190,69 @@ export default function AdminPage() {
       title: "Template Status Updated",
       description: "Template status has been changed successfully.",
     })
+  }
+
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user)
+    setSelectedUserRole(user.role)
+  }
+
+  const handleUserRoleSave = () => {
+    if (!selectedUser || !selectedUserRole) return
+    setUsers(prev => prev.map(u => (u.id === selectedUser.id ? { ...u, role: selectedUserRole } : u)))
+    setSelectedUser({ ...selectedUser, role: selectedUserRole })
+    toast({ title: "User Updated", description: "User role saved." })
+  }
+
+  const addRoute = () => {
+    setModelRoutes(prev => [...prev, { id: Date.now().toString(), model: '', weight: 0 }])
+  }
+
+  const updateRoute = (id: string, field: 'model' | 'weight', value: string) => {
+    setModelRoutes(prev =>
+      prev.map(r => (r.id === id ? { ...r, [field]: field === 'weight' ? Number(value) : value } : r))
+    )
+  }
+
+  const removeRoute = (id: string) => {
+    setModelRoutes(prev => prev.filter(r => r.id !== id))
+  }
+
+  const handleTemplateNewVersion = (templateId: string) => {
+    setTemplates(prev =>
+      prev.map(t =>
+        t.id === templateId
+          ? {
+              ...t,
+              version: (parseFloat(t.version) + 0.1).toFixed(1),
+              versions: [
+                ...t.versions,
+                {
+                  id: Date.now().toString(),
+                  version: (parseFloat(t.version) + 0.1).toFixed(1),
+                  createdAt: new Date().toISOString(),
+                  author: 'Admin User'
+                }
+              ]
+            }
+          : t
+      )
+    )
+    toast({ title: "New Version Created", description: "Template version incremented." })
+  }
+
+  const exportAuditLogs = () => {
+    const rows = filteredAuditLogs.map(l =>
+      [l.timestamp, l.user, l.action, l.resource, l.details, l.ipAddress].join(',')
+    )
+    const csv = ['timestamp,user,action,resource,details,ip', ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'audit_logs.csv'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const getRoleColor = (role: string) => {
@@ -170,6 +273,11 @@ export default function AdminPage() {
       default: return 'secondary'
     }
   }
+
+  const filteredAuditLogs = auditLogs.filter(log =>
+    log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    log.action.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <ProtectedRoute requiredRole="admin">
@@ -217,7 +325,7 @@ export default function AdminPage() {
                               className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
                                 selectedUser?.id === user.id ? 'ring-2 ring-blue-500' : ''
                               }`}
-                              onClick={() => setSelectedUser(user)}
+                              onClick={() => handleUserSelect(user)}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
@@ -281,7 +389,7 @@ export default function AdminPage() {
                             </div>
                             <div>
                               <Label htmlFor="role">Role</Label>
-                              <Select value={selectedUser.role}>
+                              <Select value={selectedUserRole} onValueChange={setSelectedUserRole}>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
@@ -292,6 +400,14 @@ export default function AdminPage() {
                                   <SelectItem value="signer">Signer</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+                            <div>
+                              <Label>Permissions</Label>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {ROLE_PERMISSIONS[selectedUserRole ?? selectedUser.role].map(p => (
+                                  <Badge key={p} variant="outline">{p}</Badge>
+                                ))}
+                              </div>
                             </div>
                             <div>
                               <Label>Status</Label>
@@ -307,7 +423,7 @@ export default function AdminPage() {
                                 {new Date(selectedUser.createdAt).toLocaleDateString()}
                               </p>
                             </div>
-                            <Button className="w-full">
+                            <Button className="w-full" onClick={handleUserRoleSave}>
                               Save Changes
                             </Button>
                           </div>
@@ -339,7 +455,7 @@ export default function AdminPage() {
                         <div key={template.id} className="border rounded-lg p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h3 className="font-medium">{template.name}</h3>
+                              <h3 className="font-medium cursor-pointer" onClick={() => setOpenTemplate(openTemplate === template.id ? null : template.id)}>{template.name}</h3>
                               <p className="text-sm text-gray-600">Version {template.version}</p>
                               <p className="text-xs text-gray-500">
                                 Modified: {new Date(template.lastModified).toLocaleString()} by {template.author}
@@ -355,7 +471,7 @@ export default function AdminPage() {
                               </Badge>
                               <Select
                                 value={template.status}
-                                onValueChange={(value: 'active' | 'draft' | 'archived') => 
+                                onValueChange={(value: 'active' | 'draft' | 'archived') =>
                                   handleTemplateStatusChange(template.id, value)
                                 }
                               >
@@ -368,11 +484,20 @@ export default function AdminPage() {
                                   <SelectItem value="archived">Archived</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <Button variant="outline" size="sm">
-                                Edit
+                              <Button variant="outline" size="sm" onClick={() => handleTemplateNewVersion(template.id)}>
+                                New Version
                               </Button>
                             </div>
                           </div>
+                          {openTemplate === template.id && (
+                            <div className="mt-4 space-y-2">
+                              {template.versions.map(v => (
+                                <div key={v.id} className="text-xs text-gray-600">
+                                  v{v.version} - {new Date(v.createdAt).toLocaleString()} by {v.author}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -382,8 +507,8 @@ export default function AdminPage() {
 
               {/* System Configuration */}
               <TabsContent value="system" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="md:col-span-1">
                     <CardHeader>
                       <CardTitle>AI Model Configuration</CardTitle>
                       <CardDescription>
@@ -392,41 +517,53 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
+                        {modelRoutes.map(route => (
+                          <div key={route.id} className="flex items-center space-x-2">
+                            <Input
+                              placeholder="model id"
+                              value={route.model}
+                              onChange={e => updateRoute(route.id, 'model', e.target.value)}
+                              className="flex-1"
+                            />
+                            <Input
+                              type="number"
+                              value={route.weight}
+                              onChange={e => updateRoute(route.id, 'weight', e.target.value)}
+                              className="w-24"
+                            />
+                            <Button variant="outline" size="sm" onClick={() => removeRoute(route.id)}>
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                        <Button variant="outline" size="sm" onClick={addRoute}>
+                          Add Route
+                        </Button>
                         <div>
-                          <Label htmlFor="primary-model">Primary Model</Label>
-                          <Select defaultValue="gpt-4">
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="gpt-4">GPT-4</SelectItem>
-                              <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                              <SelectItem value="claude-3">Claude 3</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="fallback-model">Fallback Model</Label>
-                          <Select defaultValue="gpt-3.5-turbo">
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                              <SelectItem value="claude-3">Claude 3</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Label htmlFor="temperature">Temperature</Label>
+                          <Input
+                            id="temperature"
+                            type="number"
+                            step="0.1"
+                            value={temperature}
+                            onChange={e => setTemperature(parseFloat(e.target.value))}
+                          />
                         </div>
                         <div>
                           <Label htmlFor="token-limit">Token Limit</Label>
-                          <Input id="token-limit" type="number" defaultValue="4000" />
+                          <Input
+                            id="token-limit"
+                            type="number"
+                            value={tokenLimit}
+                            onChange={e => setTokenLimit(parseInt(e.target.value))}
+                          />
                         </div>
-                        <Button>Save Configuration</Button>
+                        <Button onClick={() => toast({ title: 'Configuration Saved' })}>Save Configuration</Button>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="md:col-span-1">
                     <CardHeader>
                       <CardTitle>System Settings</CardTitle>
                       <CardDescription>
@@ -451,6 +588,20 @@ export default function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  <Card className="md:col-span-1">
+                    <CardHeader>
+                      <CardTitle>System Metrics</CardTitle>
+                      <CardDescription>Current performance indicators</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <p className="text-sm">CPU Usage: {metrics.cpu}%</p>
+                        <p className="text-sm">Memory Usage: {metrics.memory}%</p>
+                        <Button variant="outline" size="sm" onClick={refreshMetrics}>Refresh</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
 
@@ -458,14 +609,22 @@ export default function AdminPage() {
               <TabsContent value="audit" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Audit Trail ({auditLogs.length})</CardTitle>
+                    <CardTitle>Audit Trail ({filteredAuditLogs.length})</CardTitle>
                     <CardDescription>
                       System activity and security audit logs
                     </CardDescription>
+                    <div className="flex items-center space-x-2 mt-4">
+                      <Input
+                        placeholder="Search by user or action"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                      />
+                      <Button variant="outline" size="sm" onClick={exportAuditLogs}>Export CSV</Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {auditLogs.map((log) => (
+                      {filteredAuditLogs.map((log) => (
                         <div key={log.id} className="border rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div>
