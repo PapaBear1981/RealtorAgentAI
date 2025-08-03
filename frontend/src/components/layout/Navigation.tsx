@@ -1,10 +1,10 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
+import { useAuthStore } from "@/stores/auth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { useAuthStore } from "@/stores/auth"
-import { useToast } from "@/hooks/use-toast"
 
 interface NavigationProps {
   className?: string
@@ -32,6 +32,7 @@ export function Navigation({ className }: NavigationProps) {
     { href: "/dashboard", label: "Dashboard" },
     { href: "/documents", label: "Documents" },
     { href: "/contracts", label: "Contracts" },
+    { href: "/review", label: "Review" },
     { href: "/signatures", label: "Signatures" },
   ]
 
