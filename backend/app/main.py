@@ -25,7 +25,7 @@ from .core.security import (
 )
 
 # Import routers
-from .api import auth, files, contracts, templates, signatures, webhooks, admin
+from .api import auth, files, contracts, templates, signatures, webhooks, admin, tasks
 
 # Setup logging
 setup_logging()
@@ -54,10 +54,40 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize database: {e}")
         raise
 
+    # Initialize Celery and Redis connections
+    try:
+        from .core.celery_app import get_celery_app
+        from .core.redis_config import get_redis_manager
+
+        celery_app = get_celery_app()
+        redis_manager = get_redis_manager()
+
+        # Test Redis connection
+        redis_health = redis_manager.health_check()
+        if redis_health["status"] == "healthy":
+            logger.info("Redis connection established successfully")
+        else:
+            logger.warning("Redis connection issues detected", extra={"health": redis_health})
+
+        logger.info("Background processing system initialized successfully")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize background processing: {e}")
+        # Continue startup even if background processing fails
+
     yield
 
     # Shutdown
     logger.info("Shutting down Multi-Agent Real-Estate Contract Platform Backend")
+
+    # Close Redis connections
+    try:
+        from .core.redis_config import get_redis_manager
+        redis_manager = get_redis_manager()
+        redis_manager.close()
+        logger.info("Redis connections closed successfully")
+    except Exception as e:
+        logger.error(f"Error closing Redis connections: {e}")
 
 
 # Create FastAPI application
@@ -206,6 +236,7 @@ app.include_router(templates.router, prefix="/templates", tags=["templates"])
 app.include_router(signatures.router, prefix="/signatures", tags=["signatures"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 
 
 if __name__ == "__main__":

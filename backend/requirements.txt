@@ -16,6 +16,8 @@ python-multipart==0.0.17
 # Background Tasks
 celery==5.4.0
 redis==5.2.1
+flower==2.0.1
+kombu==5.4.2
 
 # File Processing & OCR
 python-magic==0.4.27
