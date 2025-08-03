@@ -47,9 +47,15 @@ class Settings(BaseSettings):
         default="dev-secret-key-change-in-production",
         description="JWT secret key for token signing"
     )
+    SECRET_KEY: str = Field(
+        default="dev-secret-key-change-in-production",
+        description="Secret key for general encryption (alias for JWT_SECRET_KEY)"
+    )
     JWT_ALGORITHM: str = Field(default="HS256", description="JWT algorithm")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="Access token expiration in minutes")
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, description="Refresh token expiration in days")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="Access token expiration in minutes (alias)")
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, description="Refresh token expiration in days (alias)")
 
     # S3/MinIO settings
     S3_ENDPOINT: Optional[str] = Field(default=None, description="S3 endpoint URL")
@@ -65,6 +71,7 @@ class Settings(BaseSettings):
         default=["pdf", "docx", "doc", "png", "jpg", "jpeg", "tiff"],
         description="Allowed file extensions"
     )
+    UPLOAD_DIR: str = Field(default="./uploads", description="Upload directory path")
 
     # OCR settings
     TESSERACT_CMD: Optional[str] = Field(default=None, description="Tesseract command path")
@@ -94,12 +101,18 @@ class Settings(BaseSettings):
     # AI/LLM settings
     OPENAI_API_KEY: Optional[str] = Field(default=None, description="OpenAI API key")
     ANTHROPIC_API_KEY: Optional[str] = Field(default=None, description="Anthropic API key")
-    OPENROUTER_API_KEY: Optional[str] = Field(default=None, description="OpenRouter API key")
+    OPENROUTER_API_KEY: Optional[str] = Field(default=None, description="OpenRouter API key for unified model access")
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434", description="Ollama base URL")
 
     # Default AI model settings
     DEFAULT_LLM_MODEL: str = Field(default="gpt-4o-mini", description="Default LLM model")
     DEFAULT_EMBEDDING_MODEL: str = Field(default="text-embedding-3-small", description="Default embedding model")
+
+    # Model Router settings
+    MODEL_ROUTER_STRATEGY: str = Field(default="cost_optimized", description="Model routing strategy: cost_optimized, performance, balanced")
+    MODEL_ROUTER_FALLBACK_ENABLED: bool = Field(default=True, description="Enable fallback to alternative models")
+    MODEL_ROUTER_HEALTH_CHECK_INTERVAL: int = Field(default=300, description="Health check interval in seconds")
+    MODEL_ROUTER_MAX_RETRIES: int = Field(default=3, description="Maximum retry attempts for failed requests")
 
     # E-signature settings
     DOCUSIGN_INTEGRATION_KEY: Optional[str] = Field(default=None, description="DocuSign integration key")
@@ -122,6 +135,20 @@ class Settings(BaseSettings):
     # Rate limiting settings
     RATE_LIMIT_REQUESTS: int = Field(default=100, description="Rate limit requests per minute")
     RATE_LIMIT_WINDOW: int = Field(default=60, description="Rate limit window in seconds")
+
+    # Email settings
+    SMTP_HOST: Optional[str] = Field(default=None, description="SMTP host for email sending")
+    SMTP_PORT: int = Field(default=587, description="SMTP port")
+    SMTP_USER: Optional[str] = Field(default=None, description="SMTP username")
+    SMTP_PASSWORD: Optional[str] = Field(default=None, description="SMTP password")
+    SMTP_TLS: bool = Field(default=True, description="Use TLS for SMTP")
+
+    # Webhook settings
+    WEBHOOK_SECRET: Optional[str] = Field(default=None, description="Webhook secret for validation")
+
+    # Monitoring settings
+    SENTRY_DSN: Optional[str] = Field(default=None, description="Sentry DSN for error tracking")
+    ANALYTICS_ENABLED: bool = Field(default=False, description="Enable analytics tracking")
 
     @field_validator("ENVIRONMENT")
     @classmethod

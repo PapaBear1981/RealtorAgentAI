@@ -25,7 +25,7 @@ from .core.security import (
 )
 
 # Import routers
-from .api import auth, files, contracts, templates, signatures, webhooks, admin, tasks
+from .api import auth, files, contracts, templates, signatures, webhooks, admin, tasks, model_router
 
 # Setup logging
 setup_logging()
@@ -237,6 +237,7 @@ app.include_router(signatures.router, prefix="/signatures", tags=["signatures"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
+app.include_router(model_router.router, prefix="/ai-agents/model-router", tags=["ai-agents"])
 
 
 if __name__ == "__main__":
