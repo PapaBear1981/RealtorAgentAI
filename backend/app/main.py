@@ -25,7 +25,7 @@ from .core.security import (
 )
 
 # Import routers
-from .api import auth, files, contracts, templates
+from .api import auth, files, contracts, templates, signatures, webhooks
 # from .api import admin
 
 # Setup logging
@@ -204,6 +204,8 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(files.router, prefix="/files", tags=["files"])
 app.include_router(contracts.router, prefix="/contracts", tags=["contracts"])
 app.include_router(templates.router, prefix="/templates", tags=["templates"])
+app.include_router(signatures.router, prefix="/signatures", tags=["signatures"])
+app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 # app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 
