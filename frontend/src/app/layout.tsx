@@ -1,5 +1,6 @@
 import { AuthInitializer } from "@/components/auth/AuthInitializer"
 import { AuthenticatedAssistantAgent } from "@/components/help/AuthenticatedAssistantAgent"
+import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import "@/styles/globals.css"
 import type { Metadata } from "next"
@@ -20,12 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <div className="min-h-screen bg-background font-sans antialiased">
-          <AuthInitializer />
-          {children}
-          <AuthenticatedAssistantAgent />
-          <Toaster />
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <div className="min-h-screen bg-background font-sans antialiased">
+            <AuthInitializer />
+            {children}
+            <AuthenticatedAssistantAgent />
+            <Toaster />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )
