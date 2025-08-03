@@ -38,8 +38,70 @@ interface Version {
   author: string
   timestamp: string
   changes: Change[]
-  status: 'draft' | 'review' | 'approved' | 'rejected'
+  status: 'draft' | 'review' | 'approved' | 'rejected' | 'changes_requested'
+  content: string
 }
+
+const VERSION_1_TEXT = `RESIDENTIAL PURCHASE AGREEMENT
+
+This Purchase Agreement is made between John Smith ("Buyer") and Jane Doe ("Seller") for the purchase of the property located at:
+
+123 Main Street, Anytown, ST 12345
+
+PURCHASE TERMS:
+- Purchase Price: $350,000
+- Earnest Money: $5,000
+- Financing: Conventional
+- Closing Date: February 15, 2024
+
+ADDITIONAL TERMS:
+- Property sold "as is" with right to inspect
+- Seller to provide clear title
+- Buyer responsible for all inspections
+
+CONTINGENCIES:
+- Financing contingency: 30 days
+- Inspection contingency: 10 days
+- Appraisal contingency: 21 days
+
+This agreement is binding upon execution by all parties.
+
+Buyer: _________________ Date: _________
+John Smith
+
+Seller: _________________ Date: _________
+Jane Doe`
+
+const VERSION_2_TEXT = `RESIDENTIAL PURCHASE AGREEMENT
+
+This Purchase Agreement is made between John Smith ("Buyer") and Jane Doe ("Seller") for the purchase of the property located at:
+
+123 Main Street, Anytown, ST 12345
+
+PURCHASE TERMS:
+- Purchase Price: $365,000
+- Earnest Money: $5,000
+- Financing: Conventional
+- Closing Date: February 15, 2024
+
+ADDITIONAL TERMS:
+- Property sold "as is" with right to inspect
+- Seller to provide clear title
+- Buyer responsible for all inspections
+- Seller agrees to provide home warranty for one year.
+
+CONTINGENCIES:
+- Financing contingency: 30 days
+- Inspection contingency: 10 days
+- Appraisal contingency: 21 days
+
+This agreement is binding upon execution by all parties.
+
+Buyer: _________________ Date: _________
+John Smith
+
+Seller: _________________ Date: _________
+Jane Doe`
 
 const MOCK_VERSIONS: Version[] = [
   {
@@ -49,7 +111,8 @@ const MOCK_VERSIONS: Version[] = [
     author: 'John Smith',
     timestamp: '2024-01-15T10:00:00Z',
     status: 'approved',
-    changes: []
+    changes: [],
+    content: VERSION_1_TEXT,
   },
   {
     id: '2',
@@ -66,7 +129,7 @@ const MOCK_VERSIONS: Version[] = [
         oldText: 'Purchase Price: $350,000',
         newText: 'Purchase Price: $365,000',
         author: 'Jane Doe',
-        timestamp: '2024-01-16T14:30:00Z'
+        timestamp: '2024-01-16T14:30:00Z',
       },
       {
         id: '2',
@@ -74,10 +137,11 @@ const MOCK_VERSIONS: Version[] = [
         lineNumber: 25,
         newText: 'Seller agrees to provide home warranty for one year.',
         author: 'Jane Doe',
-        timestamp: '2024-01-16T14:30:00Z'
-      }
-    ]
-  }
+        timestamp: '2024-01-16T14:30:00Z',
+      },
+    ],
+    content: VERSION_2_TEXT,
+  },
 ]
 
 const MOCK_COMMENTS: Comment[] = [
@@ -110,49 +174,113 @@ const MOCK_COMMENTS: Comment[] = [
   }
 ]
 
-const CONTRACT_TEXT = `RESIDENTIAL PURCHASE AGREEMENT
-
-This Purchase Agreement is made between John Smith ("Buyer") and Jane Doe ("Seller") for the purchase of the property located at:
-
-123 Main Street, Anytown, ST 12345
-
-PURCHASE TERMS:
-- Purchase Price: $365,000
-- Earnest Money: $5,000
-- Financing: Conventional
-- Closing Date: February 15, 2024
-
-ADDITIONAL TERMS:
-- Property sold "as is" with right to inspect
-- Seller to provide clear title
-- Buyer responsible for all inspections
-- Seller agrees to provide home warranty for one year.
-
-CONTINGENCIES:
-- Financing contingency: 30 days
-- Inspection contingency: 10 days
-- Appraisal contingency: 21 days
-
-This agreement is binding upon execution by all parties.
-
-Buyer: _________________ Date: _________
-John Smith
-
-Seller: _________________ Date: _________
-Jane Doe`
 
 export default function ReviewPage() {
+  const [versions, setVersions] = useState<Version[]>(MOCK_VERSIONS)
   const [selectedVersion, setSelectedVersion] = useState<Version>(MOCK_VERSIONS[1])
   const [comments, setComments] = useState<Comment[]>(MOCK_COMMENTS)
   const [newComment, setNewComment] = useState('')
   const [selectedLine, setSelectedLine] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState('redline')
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyContent, setReplyContent] = useState('')
   const { toast } = useToast()
+
+  const previousVersion = versions.find(v => v.number === selectedVersion.number - 1)
+
+  const selectVersion = (id: string) => {
+    const version = versions.find(v => v.id === id)
+    if (version) setSelectedVersion(version)
+  }
+
+  const updateVersionStatus = (status: Version['status']) => {
+    setVersions(prev => prev.map(v => (v.id === selectedVersion.id ? { ...v, status } : v)))
+    setSelectedVersion(prev => ({ ...prev, status }))
+  }
+
+  const handleApprove = () => {
+    updateVersionStatus('approved')
+    toast({
+      title: "Version Approved",
+      description: "The contract version has been approved successfully.",
+    })
+  }
+
+  const handleRequestChanges = () => {
+    updateVersionStatus('changes_requested')
+    toast({
+      title: "Changes Requested",
+      description: "Change request has been sent to the author.",
+      variant: "destructive",
+    })
+  }
+
+  const addReply = (parentId: string) => {
+    if (!replyContent.trim()) return
+
+    const reply: Comment = {
+      id: Date.now().toString(),
+      author: 'Current User',
+      content: replyContent,
+      timestamp: new Date().toISOString(),
+      resolved: false,
+      replies: [],
+    }
+
+    const addReplyToComment = (commentsList: Comment[]): Comment[] =>
+      commentsList.map(c => {
+        if (c.id === parentId) {
+          return { ...c, replies: [...c.replies, reply] }
+        }
+        return { ...c, replies: addReplyToComment(c.replies) }
+      })
+
+    setComments(prev => addReplyToComment(prev))
+    setReplyContent('')
+    setReplyingTo(null)
+
+    toast({
+      title: "Reply Added",
+      description: "Your reply has been added to the discussion.",
+    })
+  }
+
+  const renderBeforeAfter = (before: Version, after: Version) => {
+    const beforeLines = before.content.split('\n')
+    const afterLines = after.content.split('\n')
+    const maxLines = Math.max(beforeLines.length, afterLines.length)
+
+    return Array.from({ length: maxLines }, (_, i) => {
+      const beforeLine = beforeLines[i] || ''
+      const afterLine = afterLines[i] || ''
+      const changed = beforeLine !== afterLine
+      return (
+        <div key={i} className="grid grid-cols-2 gap-4 py-1 px-2">
+          <div
+            className={`flex space-x-2 rounded px-2 ${
+              changed ? 'bg-red-50 line-through text-red-800' : 'text-gray-900'
+            }`}
+          >
+            <span className="text-xs text-gray-400 w-8 select-none">{i + 1}</span>
+            <span className="flex-1">{beforeLine}</span>
+          </div>
+          <div
+            className={`flex space-x-2 rounded px-2 ${
+              changed ? 'bg-green-50 text-green-800' : 'text-gray-900'
+            }`}
+          >
+            <span className="text-xs text-gray-400 w-8 select-none">{i + 1}</span>
+            <span className="flex-1">{afterLine}</span>
+          </div>
+        </div>
+      )
+    })
+  }
 
   // Keyboard shortcuts
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
     if (event.ctrlKey || event.metaKey) return
-    
+
     switch (event.key.toLowerCase()) {
       case 'a':
         event.preventDefault()
@@ -163,27 +291,12 @@ export default function ReviewPage() {
         handleRequestChanges()
         break
     }
-  }, [])
+  }, [handleApprove, handleRequestChanges])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyPress)
     return () => document.removeEventListener('keydown', handleKeyPress)
   }, [handleKeyPress])
-
-  const handleApprove = () => {
-    toast({
-      title: "Version Approved",
-      description: "The contract version has been approved successfully.",
-    })
-  }
-
-  const handleRequestChanges = () => {
-    toast({
-      title: "Changes Requested",
-      description: "Change request has been sent to the author.",
-      variant: "destructive",
-    })
-  }
 
   const addComment = () => {
     if (!newComment.trim()) return
@@ -213,7 +326,7 @@ export default function ReviewPage() {
   }
 
   const renderContractWithChanges = () => {
-    const lines = CONTRACT_TEXT.split('\n')
+    const lines = selectedVersion.content.split('\n')
     const changes = selectedVersion.changes
 
     return lines.map((line, index) => {
@@ -268,32 +381,66 @@ export default function ReviewPage() {
               {/* Line Comments */}
               {lineComments.length > 0 && (
                 <div className="mt-2 space-y-2">
-                  {lineComments.map(comment => (
-                    <div key={comment.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-2 rounded">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900">{comment.author}</span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(comment.timestamp).toLocaleString()}
-                        </span>
+              {lineComments.map(comment => (
+                <div key={comment.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-2 rounded">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-900">{comment.author}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(comment.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700">{comment.content}</p>
+                  <div className="mt-1">
+                    <Button variant="link" size="xs" onClick={() => setReplyingTo(comment.id)}>
+                      Reply
+                    </Button>
+                  </div>
+                  {replyingTo === comment.id && (
+                    <div className="mt-2 space-y-2">
+                      <Textarea
+                        rows={2}
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        placeholder="Write a reply..."
+                      />
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => addReply(comment.id)}
+                          disabled={!replyContent.trim()}
+                        >
+                          Send
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setReplyingTo(null)
+                            setReplyContent('')
+                          }}
+                        >
+                          Cancel
+                        </Button>
                       </div>
-                      <p className="text-sm text-gray-700">{comment.content}</p>
-                      {comment.replies.length > 0 && (
-                        <div className="mt-2 ml-4 space-y-1">
-                          {comment.replies.map(reply => (
-                            <div key={reply.id} className="bg-white p-2 rounded border">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-gray-800">{reply.author}</span>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(reply.timestamp).toLocaleString()}
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-600">{reply.content}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
-                  ))}
+                  )}
+                  {comment.replies.length > 0 && (
+                    <div className="mt-2 ml-4 space-y-1">
+                      {comment.replies.map(reply => (
+                        <div key={reply.id} className="bg-white p-2 rounded border">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-gray-800">{reply.author}</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(reply.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600">{reply.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
                 </div>
               )}
             </div>
@@ -358,20 +505,41 @@ export default function ReviewPage() {
                               By {selectedVersion.author} on {new Date(selectedVersion.timestamp).toLocaleString()}
                             </CardDescription>
                           </div>
-                          <Badge variant={
-                            selectedVersion.status === 'approved' ? 'default' :
-                            selectedVersion.status === 'rejected' ? 'destructive' :
-                            'secondary'
-                          }>
+                          <Badge
+                            variant={
+                              selectedVersion.status === 'approved'
+                                ? 'default'
+                                : selectedVersion.status === 'rejected' || selectedVersion.status === 'changes_requested'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                          >
                             {selectedVersion.status}
                           </Badge>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="bg-white border rounded-lg p-4 font-mono text-sm max-h-96 overflow-y-auto">
-                          {renderContractWithChanges()}
-                        </div>
-                        
+                        <Tabs defaultValue="unified">
+                          <TabsList className="grid w-full grid-cols-2 mb-4">
+                            <TabsTrigger value="unified">Redline</TabsTrigger>
+                            <TabsTrigger value="split">Before/After</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="unified">
+                            <div className="bg-white border rounded-lg p-4 font-mono text-sm max-h-96 overflow-y-auto">
+                              {renderContractWithChanges()}
+                            </div>
+                          </TabsContent>
+                          <TabsContent value="split">
+                            {previousVersion ? (
+                              <div className="bg-white border rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+                                {renderBeforeAfter(previousVersion, selectedVersion)}
+                              </div>
+                            ) : (
+                              <div className="text-sm text-gray-600">No previous version for comparison</div>
+                            )}
+                          </TabsContent>
+                        </Tabs>
+
                         <div className="mt-6 flex justify-between">
                           <div className="flex items-center space-x-2">
                             <span className="text-sm text-gray-600">
@@ -379,18 +547,15 @@ export default function ReviewPage() {
                             </span>
                           </div>
                           <div className="flex space-x-2">
-                            <Button 
-                              variant="destructive" 
+                            <Button
+                              variant="destructive"
                               onClick={handleRequestChanges}
                               className="flex items-center space-x-1"
                             >
                               <span>Request Changes</span>
                               <kbd className="ml-1 px-1 py-0.5 text-xs bg-red-200 rounded">R</kbd>
                             </Button>
-                            <Button 
-                              onClick={handleApprove}
-                              className="flex items-center space-x-1"
-                            >
+                            <Button onClick={handleApprove} className="flex items-center space-x-1">
                               <span>Approve</span>
                               <kbd className="ml-1 px-1 py-0.5 text-xs bg-green-200 rounded">A</kbd>
                             </Button>
@@ -410,13 +575,13 @@ export default function ReviewPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {MOCK_VERSIONS.map((version) => (
-                            <div 
+                          {versions.map((version) => (
+                            <div
                               key={version.id}
                               className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
                                 selectedVersion.id === version.id ? 'ring-2 ring-blue-500' : ''
                               }`}
-                              onClick={() => setSelectedVersion(version)}
+                              onClick={() => selectVersion(version.id)}
                             >
                               <div className="flex items-center justify-between">
                                 <div>
@@ -428,11 +593,15 @@ export default function ReviewPage() {
                                     {version.changes.length} changes
                                   </p>
                                 </div>
-                                <Badge variant={
-                                  version.status === 'approved' ? 'default' :
-                                  version.status === 'rejected' ? 'destructive' :
-                                  'secondary'
-                                }>
+                                <Badge
+                                  variant={
+                                    version.status === 'approved'
+                                      ? 'default'
+                                      : version.status === 'rejected' || version.status === 'changes_requested'
+                                        ? 'destructive'
+                                        : 'secondary'
+                                  }
+                                >
                                   {version.status}
                                 </Badge>
                               </div>
@@ -441,6 +610,21 @@ export default function ReviewPage() {
                         </div>
                       </CardContent>
                     </Card>
+                    {previousVersion && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Version Diff</CardTitle>
+                          <CardDescription>
+                            Comparing version {selectedVersion.number} with version {previousVersion.number}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="bg-white border rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+                            {renderBeforeAfter(previousVersion, selectedVersion)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="comments" className="space-y-6">
@@ -476,7 +660,42 @@ export default function ReviewPage() {
                                     </span>
                                   </div>
                                   <p className="text-sm text-gray-700">{comment.content}</p>
-                                  
+                                  <div className="mt-1">
+                                    <Button variant="link" size="xs" onClick={() => setReplyingTo(comment.id)}>
+                                      Reply
+                                    </Button>
+                                  </div>
+
+                                  {replyingTo === comment.id && (
+                                    <div className="mt-2 space-y-2">
+                                      <Textarea
+                                        rows={2}
+                                        value={replyContent}
+                                        onChange={(e) => setReplyContent(e.target.value)}
+                                        placeholder="Write a reply..."
+                                      />
+                                      <div className="flex space-x-2">
+                                        <Button
+                                          size="sm"
+                                          onClick={() => addReply(comment.id)}
+                                          disabled={!replyContent.trim()}
+                                        >
+                                          Send
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            setReplyingTo(null)
+                                            setReplyContent('')
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
                                   {comment.replies.length > 0 && (
                                     <div className="mt-3 ml-4 space-y-2">
                                       {comment.replies.map(reply => (
@@ -560,11 +779,15 @@ export default function ReviewPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Status:</span>
-                        <Badge variant={
-                          selectedVersion.status === 'approved' ? 'default' :
-                          selectedVersion.status === 'rejected' ? 'destructive' :
-                          'secondary'
-                        }>
+                        <Badge
+                          variant={
+                            selectedVersion.status === 'approved'
+                              ? 'default'
+                              : selectedVersion.status === 'rejected' || selectedVersion.status === 'changes_requested'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                        >
                           {selectedVersion.status}
                         </Badge>
                       </div>
