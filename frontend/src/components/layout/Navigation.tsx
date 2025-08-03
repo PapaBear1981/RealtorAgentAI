@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuthStore } from "@/stores/auth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "react-i18next"
 
 interface NavigationProps {
   className?: string
@@ -14,6 +15,7 @@ export function Navigation({ className }: NavigationProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { user, isAuthenticated, logout } = useAuthStore()
+  const { t } = useTranslation()
 
   const handleLogout = async () => {
     logout()
@@ -29,16 +31,16 @@ export function Navigation({ className }: NavigationProps) {
   }
 
   const navigationItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/documents", label: "Documents" },
-    { href: "/contracts", label: "Contracts" },
-    { href: "/review", label: "Review" },
-    { href: "/signatures", label: "Signatures" },
+    { href: "/dashboard", key: "nav.dashboard" },
+    { href: "/documents", key: "nav.documents" },
+    { href: "/contracts", key: "nav.contracts" },
+    { href: "/review", key: "nav.review" },
+    { href: "/signatures", key: "nav.signatures" },
   ]
 
   // Add admin-only items
   if (user.role === 'admin') {
-    navigationItems.push({ href: "/admin", label: "Admin" })
+    navigationItems.push({ href: "/admin", key: "nav.admin" })
   }
 
   return (
@@ -48,7 +50,7 @@ export function Navigation({ className }: NavigationProps) {
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">RealtorAgentAI</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t("brand")}</h1>
             </Link>
           </div>
 
@@ -60,7 +62,7 @@ export function Navigation({ className }: NavigationProps) {
                 href={item.href}
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             ))}
           </div>
@@ -68,13 +70,13 @@ export function Navigation({ className }: NavigationProps) {
           {/* User Menu */}
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-700">
-              Welcome, {user.name}
+              {t("nav.welcome", { name: user.name })}
             </span>
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
               {user.role}
             </span>
             <Button onClick={handleLogout} variant="outline" size="sm">
-              Logout
+              {t("nav.logout")}
             </Button>
           </div>
         </div>
@@ -89,7 +91,7 @@ export function Navigation({ className }: NavigationProps) {
               href={item.href}
               className="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
             >
-              {item.label}
+              {t(item.key)}
             </Link>
           ))}
         </div>

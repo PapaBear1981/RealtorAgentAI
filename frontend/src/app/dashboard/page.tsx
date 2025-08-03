@@ -2,8 +2,10 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Navigation } from "@/components/layout/Navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useTranslation } from "react-i18next"
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
@@ -14,9 +16,9 @@ export default function DashboardPage() {
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{t("dashboard.title")}</h1>
               <p className="text-sm text-gray-600 mt-1">
-                Overview of your real estate contracts and activities
+                {t("dashboard.subtitle")}
               </p>
             </div>
           </div>
@@ -29,7 +31,7 @@ export default function DashboardPage() {
             {/* My Deals Widget */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">My Deals</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.widgets.myDeals")}</CardTitle>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -56,7 +58,7 @@ export default function DashboardPage() {
             {/* Pending Signatures Widget */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Signatures</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.widgets.pending")}</CardTitle>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -81,7 +83,7 @@ export default function DashboardPage() {
             {/* Compliance Alerts Widget */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Compliance Alerts</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.widgets.compliance")}</CardTitle>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -108,7 +110,7 @@ export default function DashboardPage() {
             {/* Recent Uploads Widget */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Recent Uploads</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.widgets.uploads")}</CardTitle>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -136,37 +138,37 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Document Intake</CardTitle>
+                <CardTitle>{t("dashboard.widgets.documentIntake.title")}</CardTitle>
                 <CardDescription>
-                  Upload and process real estate documents
+                  {t("dashboard.widgets.documentIntake.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">Upload Documents</Button>
+                <Button className="w-full">{t("dashboard.widgets.documentIntake.action")}</Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Contract Generator</CardTitle>
+                <CardTitle>{t("dashboard.widgets.contractGenerator.title")}</CardTitle>
                 <CardDescription>
-                  Generate contracts from templates
+                  {t("dashboard.widgets.contractGenerator.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">Create Contract</Button>
+                <Button className="w-full">{t("dashboard.widgets.contractGenerator.action")}</Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Signature Tracker</CardTitle>
+                <CardTitle>{t("dashboard.widgets.signatureTracker.title")}</CardTitle>
                 <CardDescription>
-                  Track multi-party signatures
+                  {t("dashboard.widgets.signatureTracker.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">View Signatures</Button>
+                <Button className="w-full">{t("dashboard.widgets.signatureTracker.action")}</Button>
               </CardContent>
             </Card>
           </div>

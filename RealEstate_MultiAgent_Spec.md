@@ -28,6 +28,7 @@
 - Role‑based access; JWT auth.
 - Model selection & thresholds via Admin.
 - Export contracts (PDF/Docx), data reports (CSV/JSON).
+- User-selectable interface translation to Vietnamese.
 
 ### 1.4 Non‑Functional Requirements
 - Availability: 99.9% (prod).

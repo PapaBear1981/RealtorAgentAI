@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthStore } from "@/stores/auth"
+import { useTranslation } from "react-i18next"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { login } = useAuthStore()
+  const { t } = useTranslation()
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -38,14 +40,14 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password)
       toast({
-        title: "Success",
-        description: "You have been logged in successfully.",
+        title: t("login.success.title"),
+        description: t("login.success.message"),
       })
       router.push("/dashboard")
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Login failed. Please try again.",
+        title: t("login.error.title"),
+        description: error instanceof Error ? error.message : t("login.error.message"),
         variant: "destructive",
       })
     } finally {
@@ -57,17 +59,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">RealtorAgentAI</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t("login.title")}</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Multi-Agent Real Estate Contract Platform
+            {t("login.subtitle")}
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign in to your account</CardTitle>
+            <CardTitle>{t("login.signIn")}</CardTitle>
             <CardDescription>
-              Enter your email and password to access your dashboard
+              {t("login.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -78,7 +80,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email address</FormLabel>
+                      <FormLabel>{t("login.email")}</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
@@ -96,7 +98,7 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t("login.password")}</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
@@ -114,14 +116,14 @@ export default function LoginPage() {
                   className="w-full"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? t("login.submitting") : t("login.submit")}
                 </Button>
               </form>
             </Form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Demo credentials: admin@example.com / password
+                {t("login.demo")}
               </p>
             </div>
           </CardContent>

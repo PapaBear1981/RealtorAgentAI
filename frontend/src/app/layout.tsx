@@ -1,7 +1,9 @@
 import { AuthInitializer } from "@/components/auth/AuthInitializer"
 import { AuthenticatedAssistantAgent } from "@/components/help/AuthenticatedAssistantAgent"
+import { LanguageToggle } from "@/components/LanguageToggle"
 import { Toaster } from "@/components/ui/toaster"
 import "@/styles/globals.css"
+import "@/lib/i18n"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 
@@ -22,6 +24,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="min-h-screen bg-background font-sans antialiased">
           <AuthInitializer />
+          <div className="absolute top-4 right-4">
+            <LanguageToggle />
+          </div>
           {children}
           <AuthenticatedAssistantAgent />
           <Toaster />
