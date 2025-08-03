@@ -353,6 +353,107 @@ class TemplateEngine:
             if not re.match(var_def.pattern, value):
                 raise VariableValidationError(f"Value does not match required pattern")
 
+    async def render_template_advanced(
+        self,
+        template_content: str,
+        variables: Dict[str, Any],
+        variable_definitions: Optional[List[TemplateVariable]] = None,
+        validate_variables: bool = True,
+        output_format: OutputFormat = OutputFormat.HTML,
+        enable_preview_mode: bool = False,
+        apply_business_rules: bool = True,
+        include_metadata: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Advanced template rendering with enhanced features.
+
+        Args:
+            template_content: Template content to render
+            variables: Variables for substitution
+            variable_definitions: Variable definitions for validation
+            validate_variables: Whether to validate variables
+            output_format: Output format
+            enable_preview_mode: Enable preview mode with placeholders
+            apply_business_rules: Apply business rules during rendering
+            include_metadata: Include rendering metadata
+
+        Returns:
+            Dict: Rendering results with metadata
+        """
+        try:
+            start_time = datetime.now()
+
+            # Prepare variables with business rules if enabled
+            processed_variables = variables.copy()
+            if apply_business_rules and variable_definitions:
+                processed_variables = await self._apply_rendering_rules(
+                    processed_variables, variable_definitions
+                )
+
+            # Handle preview mode
+            if enable_preview_mode:
+                processed_variables = self._add_preview_placeholders(
+                    processed_variables, variable_definitions
+                )
+
+            # Validate variables if requested
+            validation_results = None
+            if validate_variables and variable_definitions:
+                validation_results = self.validate_variables(
+                    processed_variables, variable_definitions
+                )
+                if not validation_results['is_valid']:
+                    logger.warning(f"Variable validation failed: {validation_results['errors']}")
+
+            # Render template
+            rendered_content = self._render_with_jinja(template_content, processed_variables)
+
+            # Post-process content based on output format
+            final_content = await self._post_process_content(
+                rendered_content, output_format, processed_variables
+            )
+
+            # Calculate rendering time
+            end_time = datetime.now()
+            render_time_ms = int((end_time - start_time).total_seconds() * 1000)
+
+            result = {
+                'content': final_content,
+                'output_format': output_format,
+                'render_time_ms': render_time_ms,
+                'success': True
+            }
+
+            # Add metadata if requested
+            if include_metadata:
+                result.update({
+                    'metadata': {
+                        'variables_used': list(processed_variables.keys()),
+                        'template_size': len(template_content),
+                        'output_size': len(final_content),
+                        'preview_mode': enable_preview_mode,
+                        'business_rules_applied': apply_business_rules,
+                        'validation_performed': validate_variables
+                    }
+                })
+
+            # Add validation results if available
+            if validation_results:
+                result['validation_results'] = validation_results
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Advanced template rendering failed: {e}")
+            return {
+                'content': '',
+                'output_format': output_format,
+                'render_time_ms': 0,
+                'success': False,
+                'error': str(e),
+                'validation_results': {'is_valid': False, 'errors': [str(e)], 'warnings': []}
+            }
+
     def render_template(
         self,
         template_content: str,
@@ -446,6 +547,174 @@ class TemplateEngine:
         # Normalize whitespace
         content = re.sub(r'\n\s*\n', '\n\n', content)
         return content.strip()
+
+    async def _apply_rendering_rules(
+        self,
+        variables: Dict[str, Any],
+        variable_definitions: List[TemplateVariable]
+    ) -> Dict[str, Any]:
+        """Apply business rules during rendering."""
+        try:
+            processed_variables = variables.copy()
+
+            # Apply default values for missing variables
+            for var_def in variable_definitions:
+                if var_def.name not in processed_variables and var_def.default_value is not None:
+                    processed_variables[var_def.name] = var_def.default_value
+
+            # Apply calculated fields
+            for var_def in variable_definitions:
+                if hasattr(var_def, 'calculation_rule') and getattr(var_def, 'calculation_rule', None):
+                    try:
+                        calculated_value = self._calculate_field_value(
+                            var_def.calculation_rule, processed_variables
+                        )
+                        processed_variables[var_def.name] = calculated_value
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate field {var_def.name}: {e}")
+
+            return processed_variables
+
+        except Exception as e:
+            logger.error(f"Failed to apply rendering rules: {e}")
+            return variables
+
+    def _add_preview_placeholders(
+        self,
+        variables: Dict[str, Any],
+        variable_definitions: Optional[List[TemplateVariable]]
+    ) -> Dict[str, Any]:
+        """Add preview placeholders for missing variables."""
+        try:
+            preview_variables = variables.copy()
+
+            if variable_definitions:
+                for var_def in variable_definitions:
+                    if var_def.name not in preview_variables:
+                        placeholder = self._generate_placeholder(var_def)
+                        preview_variables[var_def.name] = placeholder
+
+            return preview_variables
+
+        except Exception as e:
+            logger.error(f"Failed to add preview placeholders: {e}")
+            return variables
+
+    def _generate_placeholder(self, var_def: TemplateVariable) -> str:
+        """Generate appropriate placeholder for variable type."""
+        try:
+            if var_def.variable_type == VariableType.TEXT:
+                return f"[{var_def.label or var_def.name}]"
+            elif var_def.variable_type == VariableType.NUMBER:
+                return "0.00"
+            elif var_def.variable_type == VariableType.DATE:
+                return datetime.now().strftime("%Y-%m-%d")
+            elif var_def.variable_type == VariableType.BOOLEAN:
+                return "false"
+            elif var_def.variable_type == VariableType.EMAIL:
+                return "example@email.com"
+            elif var_def.variable_type == VariableType.PHONE:
+                return "(555) 123-4567"
+            elif var_def.variable_type == VariableType.ADDRESS:
+                return "123 Main St, City, State 12345"
+            elif var_def.variable_type == VariableType.CURRENCY:
+                return "$0.00"
+            else:
+                return f"[{var_def.label or var_def.name}]"
+
+        except Exception as e:
+            logger.warning(f"Failed to generate placeholder for {var_def.name}: {e}")
+            return f"[{var_def.name}]"
+
+    def _calculate_field_value(
+        self,
+        calculation_rule: str,
+        variables: Dict[str, Any]
+    ) -> Any:
+        """Calculate field value based on rule."""
+        try:
+            # Simple calculation rules (extend as needed)
+            if calculation_rule.startswith('='):
+                expression = calculation_rule[1:]
+
+                # Replace variable names with values
+                for var_name, var_value in variables.items():
+                    if var_name in expression and isinstance(var_value, (int, float)):
+                        expression = expression.replace(var_name, str(var_value))
+
+                # Evaluate simple mathematical expressions
+                if all(c in '0123456789+-*/.() ' for c in expression):
+                    return eval(expression, {"__builtins__": {}}, {})
+
+            return calculation_rule
+
+        except Exception as e:
+            logger.warning(f"Failed to calculate field value: {e}")
+            return calculation_rule
+
+    async def _post_process_content(
+        self,
+        content: str,
+        output_format: OutputFormat,
+        variables: Dict[str, Any]
+    ) -> str:
+        """Post-process rendered content based on output format."""
+        try:
+            if output_format == OutputFormat.HTML:
+                # Add HTML document structure if not present
+                if not content.strip().startswith('<!DOCTYPE') and not content.strip().startswith('<html'):
+                    content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Contract</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }}
+        .contract-header {{ text-align: center; margin-bottom: 30px; }}
+        .contract-content {{ margin: 20px 0; }}
+        .signature-section {{ margin-top: 50px; }}
+    </style>
+</head>
+<body>
+    <div class="contract-document">
+        {content}
+    </div>
+</body>
+</html>"""
+
+            elif output_format == OutputFormat.PDF:
+                # For PDF, ensure proper HTML structure for conversion
+                if not content.strip().startswith('<!DOCTYPE'):
+                    content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {{ margin: 1in; }}
+        body {{ font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }}
+        .page-break {{ page-break-before: always; }}
+    </style>
+</head>
+<body>
+    {content}
+</body>
+</html>"""
+
+            elif output_format == OutputFormat.TXT:
+                # Convert HTML to plain text (basic implementation)
+                import re
+                # Remove HTML tags
+                content = re.sub(r'<[^>]+>', '', content)
+                # Clean up whitespace
+                content = re.sub(r'\n\s*\n', '\n\n', content)
+                content = content.strip()
+
+            return content
+
+        except Exception as e:
+            logger.error(f"Post-processing failed: {e}")
+            return content
 
 
 # Global template engine instance

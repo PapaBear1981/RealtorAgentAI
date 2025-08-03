@@ -48,17 +48,233 @@ class ValidationError(Exception):
 class BusinessRuleEngine:
     """
     Comprehensive business rule engine for contract processing.
-    
+
     Provides rule-based validation, calculations, conditional logic,
     compliance checking, and data transformation capabilities.
     """
-    
+
     def __init__(self):
         """Initialize business rule engine."""
         self.built_in_functions = self._register_built_in_functions()
         self.validation_rules = self._register_validation_rules()
         self.compliance_rules = self._register_compliance_rules()
-    
+        self.rule_cache = {}
+        self.execution_context = {}
+
+    async def process_business_rules(
+        self,
+        rules: Dict[str, Any],
+        variables: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Process comprehensive business rules.
+
+        Args:
+            rules: Business rules configuration
+            variables: Input variables
+            context: Additional context for rule processing
+
+        Returns:
+            Dict: Processing results with updated variables and validation
+        """
+        try:
+            # Initialize processing context
+            self.execution_context = context or {}
+            processing_result = {
+                'variables': variables.copy(),
+                'validation_results': {'is_valid': True, 'errors': [], 'warnings': []},
+                'applied_rules': [],
+                'execution_log': []
+            }
+
+            # Process rules in order of priority
+            rule_types = ['validation', 'calculation', 'conditional', 'transformation', 'compliance']
+
+            for rule_type in rule_types:
+                if rule_type in rules:
+                    await self._process_rule_type(
+                        rule_type,
+                        rules[rule_type],
+                        processing_result
+                    )
+
+            return processing_result
+
+        except Exception as e:
+            logger.error(f"Business rule processing failed: {e}")
+            return {
+                'variables': variables,
+                'validation_results': {'is_valid': False, 'errors': [str(e)], 'warnings': []},
+                'applied_rules': [],
+                'execution_log': [f"Error: {str(e)}"]
+            }
+
+    async def _process_rule_type(
+        self,
+        rule_type: str,
+        rules: List[Dict[str, Any]],
+        processing_result: Dict[str, Any]
+    ):
+        """Process rules of a specific type."""
+        try:
+            for rule in rules:
+                rule_id = rule.get('id', f"{rule_type}_{len(processing_result['applied_rules'])}")
+
+                try:
+                    # Check if rule condition is met
+                    if await self._evaluate_rule_condition(rule, processing_result['variables']):
+                        # Apply rule action
+                        await self._apply_rule_action(rule, processing_result)
+
+                        processing_result['applied_rules'].append({
+                            'rule_id': rule_id,
+                            'rule_type': rule_type,
+                            'status': 'applied',
+                            'timestamp': datetime.now().isoformat()
+                        })
+
+                        processing_result['execution_log'].append(
+                            f"Applied {rule_type} rule: {rule_id}"
+                        )
+                    else:
+                        processing_result['execution_log'].append(
+                            f"Skipped {rule_type} rule: {rule_id} (condition not met)"
+                        )
+
+                except Exception as e:
+                    error_msg = f"Failed to apply {rule_type} rule {rule_id}: {str(e)}"
+                    logger.error(error_msg)
+
+                    processing_result['validation_results']['errors'].append(error_msg)
+                    processing_result['validation_results']['is_valid'] = False
+
+                    processing_result['applied_rules'].append({
+                        'rule_id': rule_id,
+                        'rule_type': rule_type,
+                        'status': 'failed',
+                        'error': str(e),
+                        'timestamp': datetime.now().isoformat()
+                    })
+
+        except Exception as e:
+            logger.error(f"Failed to process {rule_type} rules: {e}")
+            processing_result['validation_results']['errors'].append(
+                f"Failed to process {rule_type} rules: {str(e)}"
+            )
+
+    async def _evaluate_rule_condition(
+        self,
+        rule: Dict[str, Any],
+        variables: Dict[str, Any]
+    ) -> bool:
+        """Evaluate if rule condition is met."""
+        try:
+            condition = rule.get('condition')
+            if not condition:
+                return True  # No condition means always apply
+
+            if isinstance(condition, dict):
+                return await self._evaluate_condition_object(condition, variables)
+            elif isinstance(condition, str):
+                return await self._evaluate_condition_expression(condition, variables)
+            else:
+                return bool(condition)
+
+        except Exception as e:
+            logger.warning(f"Condition evaluation failed: {e}")
+            return False
+
+    async def _evaluate_condition_object(
+        self,
+        condition: Dict[str, Any],
+        variables: Dict[str, Any]
+    ) -> bool:
+        """Evaluate structured condition object."""
+        try:
+            operator = condition.get('operator', 'equals')
+            field = condition.get('field')
+            value = condition.get('value')
+
+            if not field or field not in variables:
+                return False
+
+            var_value = variables[field]
+
+            if operator == 'equals':
+                return var_value == value
+            elif operator == 'not_equals':
+                return var_value != value
+            elif operator == 'greater_than':
+                return float(var_value) > float(value)
+            elif operator == 'less_than':
+                return float(var_value) < float(value)
+            elif operator == 'greater_equal':
+                return float(var_value) >= float(value)
+            elif operator == 'less_equal':
+                return float(var_value) <= float(value)
+            elif operator == 'contains':
+                return str(value) in str(var_value)
+            elif operator == 'starts_with':
+                return str(var_value).startswith(str(value))
+            elif operator == 'ends_with':
+                return str(var_value).endswith(str(value))
+            elif operator == 'is_empty':
+                return not var_value or str(var_value).strip() == ''
+            elif operator == 'is_not_empty':
+                return var_value and str(var_value).strip() != ''
+            elif operator == 'in':
+                return var_value in value if isinstance(value, list) else False
+            elif operator == 'not_in':
+                return var_value not in value if isinstance(value, list) else True
+            elif operator == 'regex':
+                return re.match(str(value), str(var_value)) is not None
+            else:
+                logger.warning(f"Unknown operator: {operator}")
+                return False
+
+        except Exception as e:
+            logger.warning(f"Condition object evaluation failed: {e}")
+            return False
+
+    async def _evaluate_condition_expression(
+        self,
+        expression: str,
+        variables: Dict[str, Any]
+    ) -> bool:
+        """Evaluate condition expression."""
+        try:
+            # Replace variable names with values
+            eval_expression = expression
+            for var_name, var_value in variables.items():
+                if var_name in eval_expression:
+                    if isinstance(var_value, str):
+                        eval_expression = eval_expression.replace(
+                            var_name, f"'{var_value}'"
+                        )
+                    else:
+                        eval_expression = eval_expression.replace(
+                            var_name, str(var_value)
+                        )
+
+            # Evaluate expression safely
+            allowed_names = {
+                "__builtins__": {},
+                "True": True,
+                "False": False,
+                "None": None,
+            }
+
+            # Add built-in functions
+            allowed_names.update(self.built_in_functions)
+
+            result = eval(eval_expression, allowed_names, {})
+            return bool(result)
+
+        except Exception as e:
+            logger.warning(f"Expression evaluation failed: {e}")
+            return False
+
     def _register_built_in_functions(self) -> Dict[str, Callable]:
         """Register built-in functions for rule processing."""
         return {
@@ -72,7 +288,7 @@ class BusinessRuleEngine:
             'min': lambda *args: min(float(x) for x in args),
             'max': lambda *args: max(float(x) for x in args),
             'abs': lambda value: abs(float(value)),
-            
+
             # String functions
             'upper': lambda text: str(text).upper(),
             'lower': lambda text: str(text).lower(),
@@ -84,28 +300,28 @@ class BusinessRuleEngine:
             'contains': lambda text, substring: str(substring) in str(text),
             'starts_with': lambda text, prefix: str(text).startswith(str(prefix)),
             'ends_with': lambda text, suffix: str(text).endswith(str(suffix)),
-            
+
             # Date functions
             'today': lambda: date.today(),
             'now': lambda: datetime.now(),
             'date_add_days': lambda date_val, days: self._parse_date(date_val) + timedelta(days=int(days)),
             'date_diff_days': lambda date1, date2: (self._parse_date(date2) - self._parse_date(date1)).days,
             'format_date': lambda date_val, format_str='%Y-%m-%d': self._parse_date(date_val).strftime(format_str),
-            
+
             # Validation functions
             'is_email': lambda email: re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', str(email)) is not None,
             'is_phone': lambda phone: re.match(r'^[\+]?[1-9][\d]{0,15}$', re.sub(r'[^\d\+]', '', str(phone))) is not None,
             'is_number': lambda value: self._is_number(value),
             'is_positive': lambda value: self._is_number(value) and float(value) > 0,
             'is_not_empty': lambda value: value is not None and str(value).strip() != '',
-            
+
             # Logical functions
             'if': lambda condition, true_val, false_val: true_val if condition else false_val,
             'and': lambda *args: all(args),
             'or': lambda *args: any(args),
             'not': lambda value: not value,
         }
-    
+
     def _register_validation_rules(self) -> Dict[str, Dict[str, Any]]:
         """Register common validation rules."""
         return {
@@ -146,7 +362,7 @@ class BusinessRuleEngine:
                 'validator': lambda value: self._parse_date(value) < date.today() if value else True
             }
         }
-    
+
     def _register_compliance_rules(self) -> Dict[str, Dict[str, Any]]:
         """Register compliance rules for real estate contracts."""
         return {
@@ -175,7 +391,7 @@ class BusinessRuleEngine:
                 'rule': 'financing_days >= 21'
             }
         }
-    
+
     async def process_business_rules(
         self,
         variables: Dict[str, Any],
@@ -184,12 +400,12 @@ class BusinessRuleEngine:
     ) -> Dict[str, Any]:
         """
         Process business rules against variables.
-        
+
         Args:
             variables: Variable values to process
             rules: Business rules configuration
             variable_definitions: Variable definitions for validation
-            
+
         Returns:
             Dict: Processing results with updated variables and validation
         """
@@ -206,48 +422,48 @@ class BusinessRuleEngine:
                 'calculations_performed': [],
                 'transformations_applied': []
             }
-            
+
             # Apply validation rules
             if variable_definitions:
                 validation_results = await self._apply_validation_rules(
-                    results['variables'], 
+                    results['variables'],
                     variable_definitions
                 )
                 results['validation_results'] = validation_results
-            
+
             # Apply business rules
             if rules:
                 # Process calculated fields
                 if 'calculated_fields' in rules:
                     calc_results = await self._apply_calculated_fields(
-                        results['variables'], 
+                        results['variables'],
                         rules['calculated_fields']
                     )
                     results['variables'].update(calc_results['variables'])
                     results['calculations_performed'].extend(calc_results['calculations'])
-                
+
                 # Process conditional logic
                 if 'conditional_logic' in rules:
                     cond_results = await self._apply_conditional_logic(
-                        results['variables'], 
+                        results['variables'],
                         rules['conditional_logic']
                     )
                     results['variables'].update(cond_results['variables'])
                     results['applied_rules'].extend(cond_results['rules_applied'])
-                
+
                 # Process transformations
                 if 'transformations' in rules:
                     trans_results = await self._apply_transformations(
-                        results['variables'], 
+                        results['variables'],
                         rules['transformations']
                     )
                     results['variables'].update(trans_results['variables'])
                     results['transformations_applied'].extend(trans_results['transformations'])
-                
+
                 # Process compliance rules
                 if 'compliance_rules' in rules:
                     compliance_results = await self._apply_compliance_rules(
-                        results['variables'], 
+                        results['variables'],
                         rules['compliance_rules']
                     )
                     # Merge compliance results into validation results
@@ -255,16 +471,16 @@ class BusinessRuleEngine:
                         results['validation_results'][severity].extend(
                             compliance_results.get(severity, [])
                         )
-            
+
             # Update overall validation status
             results['validation_results']['is_valid'] = len(results['validation_results']['errors']) == 0
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Business rule processing failed: {e}")
             raise BusinessRuleError(f"Rule processing failed: {str(e)}")
-    
+
     async def _apply_validation_rules(
         self,
         variables: Dict[str, Any],
@@ -277,29 +493,29 @@ class BusinessRuleEngine:
             'warnings': [],
             'info': []
         }
-        
+
         for var_def in variable_definitions:
             var_name = var_def.name
             var_value = variables.get(var_name)
-            
+
             # Check required fields
             if var_def.required and (var_value is None or str(var_value).strip() == ''):
                 results['errors'].append(f"Required field '{var_def.label or var_name}' is missing")
                 continue
-            
+
             if var_value is None:
                 continue
-            
+
             # Type-specific validation
             try:
                 if var_def.variable_type == VariableType.EMAIL:
                     if not self.built_in_functions['is_email'](var_value):
                         results['errors'].append(f"Invalid email format for '{var_def.label or var_name}'")
-                
+
                 elif var_def.variable_type == VariableType.PHONE:
                     if not self.built_in_functions['is_phone'](var_value):
                         results['warnings'].append(f"Invalid phone format for '{var_def.label or var_name}'")
-                
+
                 elif var_def.variable_type == VariableType.NUMBER:
                     if not self.built_in_functions['is_number'](var_value):
                         results['errors'].append(f"Invalid number format for '{var_def.label or var_name}'")
@@ -309,20 +525,20 @@ class BusinessRuleEngine:
                             results['errors'].append(f"'{var_def.label or var_name}' must be at least {var_def.min_value}")
                         if var_def.max_value is not None and num_value > var_def.max_value:
                             results['errors'].append(f"'{var_def.label or var_name}' must be at most {var_def.max_value}")
-                
+
                 elif var_def.variable_type == VariableType.CURRENCY:
                     if not self.built_in_functions['is_positive'](var_value):
                         results['errors'].append(f"'{var_def.label or var_name}' must be a positive amount")
-                
+
                 elif var_def.variable_type == VariableType.CHOICE:
                     if var_def.choices and var_value not in var_def.choices:
                         results['errors'].append(f"'{var_def.label or var_name}' must be one of: {', '.join(var_def.choices)}")
-                
+
                 # Pattern validation
                 if var_def.pattern and isinstance(var_value, str):
                     if not re.match(var_def.pattern, var_value):
                         results['errors'].append(f"'{var_def.label or var_name}' does not match required format")
-                
+
                 # Length validation
                 if var_def.variable_type == VariableType.STRING:
                     str_value = str(var_value)
@@ -330,13 +546,13 @@ class BusinessRuleEngine:
                         results['errors'].append(f"'{var_def.label or var_name}' must be at least {var_def.min_length} characters")
                     if var_def.max_length and len(str_value) > var_def.max_length:
                         results['errors'].append(f"'{var_def.label or var_name}' must be at most {var_def.max_length} characters")
-                
+
             except Exception as e:
                 results['warnings'].append(f"Validation error for '{var_def.label or var_name}': {str(e)}")
-        
+
         results['is_valid'] = len(results['errors']) == 0
         return results
-    
+
     async def _apply_calculated_fields(
         self,
         variables: Dict[str, Any],
@@ -347,7 +563,7 @@ class BusinessRuleEngine:
             'variables': {},
             'calculations': []
         }
-        
+
         for field_name, formula in calculated_fields.items():
             try:
                 if isinstance(formula, str):
@@ -370,12 +586,12 @@ class BusinessRuleEngine:
                             'result': calculated_value,
                             'conditions': formula.get('conditions')
                         })
-                        
+
             except Exception as e:
                 logger.warning(f"Calculation failed for field {field_name}: {e}")
-        
+
         return results
-    
+
     async def _apply_conditional_logic(
         self,
         variables: Dict[str, Any],
@@ -386,13 +602,13 @@ class BusinessRuleEngine:
             'variables': {},
             'rules_applied': []
         }
-        
+
         for rule in conditional_rules:
             try:
                 condition = rule.get('if')
                 then_actions = rule.get('then', [])
                 else_actions = rule.get('else', [])
-                
+
                 if self._evaluate_condition(condition, variables):
                     # Apply then actions
                     for action in then_actions:
@@ -411,12 +627,12 @@ class BusinessRuleEngine:
                         'branch': 'else',
                         'actions_applied': len(else_actions)
                     })
-                    
+
             except Exception as e:
                 logger.warning(f"Conditional logic error: {e}")
-        
+
         return results
-    
+
     async def _apply_transformations(
         self,
         variables: Dict[str, Any],
@@ -427,7 +643,7 @@ class BusinessRuleEngine:
             'variables': {},
             'transformations': []
         }
-        
+
         for field_name, transformation in transformations.items():
             try:
                 if field_name in variables:
@@ -440,12 +656,12 @@ class BusinessRuleEngine:
                         'original_value': original_value,
                         'transformed_value': transformed_value
                     })
-                    
+
             except Exception as e:
                 logger.warning(f"Transformation failed for field {field_name}: {e}")
-        
+
         return results
-    
+
     async def _apply_compliance_rules(
         self,
         variables: Dict[str, Any],
@@ -457,7 +673,7 @@ class BusinessRuleEngine:
             'warnings': [],
             'info': []
         }
-        
+
         for rule_name in compliance_rules:
             if rule_name in self.compliance_rules:
                 rule_config = self.compliance_rules[rule_name]
@@ -465,25 +681,25 @@ class BusinessRuleEngine:
                     if not self._evaluate_condition(rule_config['rule'], variables):
                         severity = rule_config['severity']
                         message = rule_config['description']
-                        
+
                         if severity == RuleSeverity.ERROR:
                             results['errors'].append(f"Compliance violation: {message}")
                         elif severity == RuleSeverity.WARNING:
                             results['warnings'].append(f"Compliance warning: {message}")
                         else:
                             results['info'].append(f"Compliance info: {message}")
-                            
+
                 except Exception as e:
                     logger.warning(f"Compliance rule evaluation failed for {rule_name}: {e}")
-        
+
         return results
-    
+
     def _evaluate_formula(self, formula: str, variables: Dict[str, Any]) -> Any:
         """Evaluate a formula expression."""
         try:
             # Simple formula evaluation with variable substitution
             expression = formula
-            
+
             # Replace variable names with values
             for var_name, var_value in variables.items():
                 if var_name in expression:
@@ -492,23 +708,23 @@ class BusinessRuleEngine:
                         expression = expression.replace(var_name, f'"{var_value}"')
                     else:
                         expression = expression.replace(var_name, str(var_value))
-            
+
             # Replace function calls
             for func_name, func in self.built_in_functions.items():
                 if func_name in expression:
                     # Simple function replacement (extend as needed)
                     pass
-            
+
             # Evaluate simple numeric expressions
             if all(c in '0123456789+-*/.() ' for c in expression):
                 return eval(expression, {"__builtins__": {}}, {})
-            
+
             return expression
-            
+
         except Exception as e:
             logger.warning(f"Formula evaluation failed: {e}")
             return formula
-    
+
     def _evaluate_condition(self, condition: Union[str, Dict[str, Any]], variables: Dict[str, Any]) -> bool:
         """Evaluate a condition expression."""
         try:
@@ -520,11 +736,11 @@ class BusinessRuleEngine:
                 return self._evaluate_dict_condition(condition, variables)
             else:
                 return bool(condition)
-                
+
         except Exception as e:
             logger.warning(f"Condition evaluation failed: {e}")
             return False
-    
+
     def _evaluate_string_condition(self, condition: str, variables: Dict[str, Any]) -> bool:
         """Evaluate string-based condition."""
         # Replace variables in condition
@@ -535,7 +751,7 @@ class BusinessRuleEngine:
                     expression = expression.replace(var_name, f'"{var_value}"')
                 else:
                     expression = expression.replace(var_name, str(var_value))
-        
+
         # Simple boolean expression evaluation
         try:
             # Only allow safe operations
@@ -548,24 +764,24 @@ class BusinessRuleEngine:
                 expression = expression.replace('!=', '!=')
                 expression = expression.replace('<=', '<=')
                 expression = expression.replace('>=', '>=')
-                
+
                 return eval(expression, {"__builtins__": {}}, {})
         except:
             pass
-        
+
         return False
-    
+
     def _evaluate_dict_condition(self, condition: Dict[str, Any], variables: Dict[str, Any]) -> bool:
         """Evaluate dictionary-based condition."""
         field = condition.get('field')
         operator = condition.get('operator')
         value = condition.get('value')
-        
+
         if field not in variables:
             return False
-        
+
         var_value = variables[field]
-        
+
         if operator == 'equals':
             return var_value == value
         elif operator == 'not_equals':
@@ -588,31 +804,31 @@ class BusinessRuleEngine:
             return not var_value or str(var_value).strip() == ''
         elif operator == 'is_not_empty':
             return var_value and str(var_value).strip() != ''
-        
+
         return False
-    
+
     def _apply_action(self, action: Dict[str, Any], variables: Dict[str, Any], results: Dict[str, Any]):
         """Apply a rule action."""
         action_type = action.get('type')
-        
+
         if action_type == 'set_value':
             field = action.get('field')
             value = action.get('value')
             if field:
                 results[field] = value
-        
+
         elif action_type == 'calculate':
             field = action.get('field')
             formula = action.get('formula')
             if field and formula:
                 results[field] = self._evaluate_formula(formula, variables)
-        
+
         elif action_type == 'transform':
             field = action.get('field')
             transformation = action.get('transformation')
             if field and field in variables:
                 results[field] = self._apply_transformation(variables[field], transformation)
-    
+
     def _apply_transformation(self, value: Any, transformation: Union[str, Dict[str, Any]]) -> Any:
         """Apply a data transformation."""
         if isinstance(transformation, str):
@@ -625,24 +841,24 @@ class BusinessRuleEngine:
                 return str(value).title()
             elif transformation == 'trim':
                 return str(value).strip()
-        
+
         elif isinstance(transformation, dict):
             # Complex transformation
             transform_type = transformation.get('type')
-            
+
             if transform_type == 'format':
                 format_string = transformation.get('format')
                 if format_string:
                     return format_string.format(value)
-            
+
             elif transform_type == 'replace':
                 old_value = transformation.get('old')
                 new_value = transformation.get('new')
                 if old_value is not None and new_value is not None:
                     return str(value).replace(str(old_value), str(new_value))
-        
+
         return value
-    
+
     def _parse_date(self, date_value: Any) -> date:
         """Parse date from various formats."""
         if isinstance(date_value, date):
@@ -659,7 +875,7 @@ class BusinessRuleEngine:
                     return date.today()
         else:
             return date.today()
-    
+
     def _is_number(self, value: Any) -> bool:
         """Check if value is a number."""
         try:
@@ -676,15 +892,15 @@ _business_rule_engine: Optional[BusinessRuleEngine] = None
 def get_business_rule_engine() -> BusinessRuleEngine:
     """
     Get global business rule engine instance.
-    
+
     Returns:
         BusinessRuleEngine: Configured business rule engine
     """
     global _business_rule_engine
-    
+
     if _business_rule_engine is None:
         _business_rule_engine = BusinessRuleEngine()
-    
+
     return _business_rule_engine
 
 

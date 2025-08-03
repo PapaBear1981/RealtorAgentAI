@@ -56,6 +56,104 @@ class ContractService:
         self.storage_client = get_storage_client()
         self.template_engine = get_template_engine()
 
+    async def create_contract(
+        self,
+        contract_data: ContractCreate,
+        user: User,
+        session: Session
+    ) -> ContractPublic:
+        """
+        Create a new contract with comprehensive validation.
+
+        Args:
+            contract_data: Contract creation data
+            user: User creating the contract
+            session: Database session
+
+        Returns:
+            ContractPublic: Created contract information
+        """
+        try:
+            # Validate deal exists and user has access
+            from ..models.deal import Deal
+            deal = session.get(Deal, contract_data.deal_id)
+            if not deal:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Deal not found"
+                )
+
+            # Validate template exists and is active
+            template = session.get(Template, contract_data.template_id)
+            if not template:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Template not found"
+                )
+
+            if template.status != TemplateStatus.ACTIVE:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Template is not active"
+                )
+
+            # Validate contract variables if provided
+            if contract_data.variables and template.variables:
+                validation_result = await self._validate_contract_variables(
+                    contract_data.variables,
+                    template,
+                    session
+                )
+                if not validation_result['is_valid']:
+                    raise ContractValidationError(
+                        f"Variable validation failed: {validation_result['errors']}"
+                    )
+
+            # Create contract
+            contract = Contract(
+                **contract_data.dict(),
+                created_at=datetime.utcnow()
+            )
+
+            session.add(contract)
+            session.commit()
+            session.refresh(contract)
+
+            # Create initial version
+            await self._create_contract_version(contract, user, "Initial creation", session)
+
+            # Log creation
+            audit_log = AuditLog(
+                user_id=user.id,
+                actor=f"user:{user.id}",
+                action=AuditAction.CONTRACT_CREATED,
+                success=True,
+                meta={
+                    "contract_id": contract.id,
+                    "deal_id": contract.deal_id,
+                    "template_id": contract.template_id
+                }
+            )
+            session.add(audit_log)
+            session.commit()
+
+            return self._to_public_model(contract)
+
+        except HTTPException:
+            raise
+        except (ContractValidationError, ContractGenerationError) as e:
+            logger.error(f"Contract creation failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error during contract creation: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Contract creation failed"
+            )
+
     async def generate_contract(
         self,
         generation_request: TemplateGenerationRequest,
@@ -329,6 +427,114 @@ class ContractService:
                 detail="Failed to get contract"
             )
 
+    async def search_contracts(
+        self,
+        user: User,
+        session: Session,
+        search_query: Optional[str] = None,
+        deal_id: Optional[int] = None,
+        template_id: Optional[int] = None,
+        status: Optional[str] = None,
+        created_after: Optional[datetime] = None,
+        created_before: Optional[datetime] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        limit: int = 50,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """
+        Advanced contract search with filtering and sorting.
+
+        Args:
+            user: User performing search
+            session: Database session
+            search_query: Text search in title and variables
+            deal_id: Filter by deal ID
+            template_id: Filter by template ID
+            status: Filter by status
+            created_after: Filter contracts created after date
+            created_before: Filter contracts created before date
+            sort_by: Field to sort by
+            sort_order: Sort order (asc/desc)
+            limit: Maximum results
+            offset: Results offset
+
+        Returns:
+            Dict: Search results with metadata
+        """
+        try:
+            # Build base query
+            query = select(Contract)
+
+            # Apply filters
+            filters = []
+
+            if deal_id is not None:
+                filters.append(Contract.deal_id == deal_id)
+
+            if template_id is not None:
+                filters.append(Contract.template_id == template_id)
+
+            if status:
+                filters.append(Contract.status == status)
+
+            if created_after:
+                filters.append(Contract.created_at >= created_after)
+
+            if created_before:
+                filters.append(Contract.created_at <= created_before)
+
+            # Text search in title and variables
+            if search_query:
+                search_filters = []
+                if hasattr(Contract, 'title'):
+                    search_filters.append(Contract.title.ilike(f"%{search_query}%"))
+
+                # Search in variables JSON (database-specific implementation)
+                # This is a simplified version - in production, use full-text search
+                search_filters.append(
+                    func.cast(Contract.variables, String).ilike(f"%{search_query}%")
+                )
+
+                if search_filters:
+                    filters.append(or_(*search_filters))
+
+            # Apply all filters
+            if filters:
+                query = query.where(and_(*filters))
+
+            # Get total count for pagination
+            count_query = select(func.count(Contract.id)).where(and_(*filters)) if filters else select(func.count(Contract.id))
+            total_count = session.exec(count_query).first() or 0
+
+            # Apply sorting
+            sort_column = getattr(Contract, sort_by, Contract.created_at)
+            if sort_order.lower() == "desc":
+                query = query.order_by(sort_column.desc())
+            else:
+                query = query.order_by(sort_column.asc())
+
+            # Apply pagination
+            query = query.offset(offset).limit(limit)
+
+            # Execute query
+            contracts = session.exec(query).all()
+
+            return {
+                "contracts": [self._to_public_model(contract) for contract in contracts],
+                "total_count": total_count,
+                "limit": limit,
+                "offset": offset,
+                "has_more": offset + len(contracts) < total_count
+            }
+
+        except Exception as e:
+            logger.error(f"Contract search failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to search contracts"
+            )
+
     async def list_contracts(
         self,
         user: User,
@@ -541,6 +747,218 @@ class ContractService:
                 detail="Failed to delete contract"
             )
 
+    async def validate_contract_comprehensive(
+        self,
+        contract_id: int,
+        user: User,
+        session: Session
+    ) -> Dict[str, Any]:
+        """
+        Perform comprehensive contract validation.
+
+        Args:
+            contract_id: Contract ID to validate
+            user: User performing validation
+            session: Database session
+
+        Returns:
+            Dict: Comprehensive validation results
+        """
+        try:
+            # Get contract
+            contract = session.get(Contract, contract_id)
+            if not contract:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Contract not found"
+                )
+
+            # Check access permissions
+            if not await self._check_contract_access(contract, user, session):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied"
+                )
+
+            # Get template for validation rules
+            template = session.get(Template, contract.template_id)
+            if not template:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Template not found"
+                )
+
+            validation_results = {
+                "contract_id": contract_id,
+                "is_valid": True,
+                "errors": [],
+                "warnings": [],
+                "validation_timestamp": datetime.utcnow().isoformat(),
+                "validated_by": user.id,
+                "validation_details": {}
+            }
+
+            # 1. Variable validation
+            if contract.variables and template.variables:
+                var_validation = await self._validate_contract_variables(
+                    contract.variables,
+                    template,
+                    session
+                )
+                validation_results["validation_details"]["variables"] = var_validation
+                if not var_validation["is_valid"]:
+                    validation_results["is_valid"] = False
+                    validation_results["errors"].extend(var_validation["errors"])
+                validation_results["warnings"].extend(var_validation.get("warnings", []))
+
+            # 2. Business rules validation
+            if template.business_rules:
+                rules_validation = await self._validate_business_rules(
+                    contract.variables or {},
+                    template.business_rules,
+                    session
+                )
+                validation_results["validation_details"]["business_rules"] = rules_validation
+                if not rules_validation["is_valid"]:
+                    validation_results["is_valid"] = False
+                    validation_results["errors"].extend(rules_validation["errors"])
+                validation_results["warnings"].extend(rules_validation.get("warnings", []))
+
+            # 3. Data integrity validation
+            integrity_validation = await self._validate_data_integrity(contract, session)
+            validation_results["validation_details"]["data_integrity"] = integrity_validation
+            if not integrity_validation["is_valid"]:
+                validation_results["is_valid"] = False
+                validation_results["errors"].extend(integrity_validation["errors"])
+            validation_results["warnings"].extend(integrity_validation.get("warnings", []))
+
+            # 4. Compliance validation
+            compliance_validation = await self._validate_compliance(contract, template, session)
+            validation_results["validation_details"]["compliance"] = compliance_validation
+            if not compliance_validation["is_valid"]:
+                validation_results["is_valid"] = False
+                validation_results["errors"].extend(compliance_validation["errors"])
+            validation_results["warnings"].extend(compliance_validation.get("warnings", []))
+
+            # Log validation
+            audit_log = AuditLog(
+                user_id=user.id,
+                actor=f"user:{user.id}",
+                action=AuditAction.CONTRACT_VALIDATED,
+                success=validation_results["is_valid"],
+                meta={
+                    "contract_id": contract_id,
+                    "validation_result": validation_results["is_valid"],
+                    "error_count": len(validation_results["errors"]),
+                    "warning_count": len(validation_results["warnings"])
+                }
+            )
+            session.add(audit_log)
+            session.commit()
+
+            return validation_results
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Contract validation failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Contract validation failed"
+            )
+
+    async def get_contract_statistics(
+        self,
+        user: User,
+        session: Session,
+        deal_id: Optional[int] = None,
+        template_id: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Get contract statistics and analytics.
+
+        Args:
+            user: User requesting statistics
+            session: Database session
+            deal_id: Filter by deal ID
+            template_id: Filter by template ID
+
+        Returns:
+            Dict: Contract statistics
+        """
+        try:
+            # Build base query
+            query = select(Contract)
+            filters = []
+
+            if deal_id is not None:
+                filters.append(Contract.deal_id == deal_id)
+
+            if template_id is not None:
+                filters.append(Contract.template_id == template_id)
+
+            if filters:
+                query = query.where(and_(*filters))
+
+            # Get all contracts for analysis
+            contracts = session.exec(query).all()
+
+            # Calculate statistics
+            total_contracts = len(contracts)
+            status_counts = {}
+            template_usage = {}
+            monthly_creation = {}
+
+            for contract in contracts:
+                # Status distribution
+                status = contract.status or "unknown"
+                status_counts[status] = status_counts.get(status, 0) + 1
+
+                # Template usage
+                template_id = contract.template_id
+                template_usage[template_id] = template_usage.get(template_id, 0) + 1
+
+                # Monthly creation trends
+                month_key = contract.created_at.strftime("%Y-%m")
+                monthly_creation[month_key] = monthly_creation.get(month_key, 0) + 1
+
+            # Get template names for usage stats
+            template_names = {}
+            if template_usage:
+                template_ids = list(template_usage.keys())
+                templates = session.exec(
+                    select(Template).where(Template.id.in_(template_ids))
+                ).all()
+                template_names = {t.id: t.name for t in templates}
+
+            # Format template usage with names
+            template_usage_formatted = [
+                {
+                    "template_id": tid,
+                    "template_name": template_names.get(tid, f"Template {tid}"),
+                    "usage_count": count
+                }
+                for tid, count in template_usage.items()
+            ]
+
+            # Sort by usage count
+            template_usage_formatted.sort(key=lambda x: x["usage_count"], reverse=True)
+
+            return {
+                "total_contracts": total_contracts,
+                "status_distribution": status_counts,
+                "template_usage": template_usage_formatted,
+                "monthly_creation_trend": monthly_creation,
+                "generated_at": datetime.utcnow().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Contract statistics failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to get contract statistics"
+            )
+
     async def _validate_contract_variables(
         self,
         variables: Dict[str, Any],
@@ -614,6 +1032,196 @@ class ContractService:
         except Exception as e:
             logger.error(f"Business rules application failed: {e}")
             return variables
+
+    async def _validate_business_rules(
+        self,
+        variables: Dict[str, Any],
+        business_rules: Dict[str, Any],
+        session: Session
+    ) -> Dict[str, Any]:
+        """Validate contract against business rules."""
+        try:
+            validation_result = {
+                "is_valid": True,
+                "errors": [],
+                "warnings": []
+            }
+
+            # Check required fields
+            if "required_fields" in business_rules:
+                for field in business_rules["required_fields"]:
+                    if field not in variables or not variables[field]:
+                        validation_result["is_valid"] = False
+                        validation_result["errors"].append(f"Required field '{field}' is missing or empty")
+
+            # Check field constraints
+            if "field_constraints" in business_rules:
+                for field, constraints in business_rules["field_constraints"].items():
+                    if field in variables:
+                        value = variables[field]
+
+                        # Min/max value constraints
+                        if "min_value" in constraints and isinstance(value, (int, float)):
+                            if value < constraints["min_value"]:
+                                validation_result["errors"].append(
+                                    f"Field '{field}' value {value} is below minimum {constraints['min_value']}"
+                                )
+                                validation_result["is_valid"] = False
+
+                        if "max_value" in constraints and isinstance(value, (int, float)):
+                            if value > constraints["max_value"]:
+                                validation_result["errors"].append(
+                                    f"Field '{field}' value {value} exceeds maximum {constraints['max_value']}"
+                                )
+                                validation_result["is_valid"] = False
+
+                        # Pattern constraints
+                        if "pattern" in constraints and isinstance(value, str):
+                            import re
+                            if not re.match(constraints["pattern"], value):
+                                validation_result["errors"].append(
+                                    f"Field '{field}' does not match required pattern"
+                                )
+                                validation_result["is_valid"] = False
+
+            # Check conditional rules
+            if "conditional_rules" in business_rules:
+                for rule in business_rules["conditional_rules"]:
+                    if self._evaluate_condition(rule.get("condition"), variables):
+                        # Check if required fields are present
+                        for required_field in rule.get("then_required", []):
+                            if required_field not in variables or not variables[required_field]:
+                                validation_result["is_valid"] = False
+                                validation_result["errors"].append(
+                                    f"Field '{required_field}' is required when condition is met"
+                                )
+
+            return validation_result
+
+        except Exception as e:
+            logger.error(f"Business rules validation failed: {e}")
+            return {
+                "is_valid": False,
+                "errors": [f"Business rules validation error: {str(e)}"],
+                "warnings": []
+            }
+
+    async def _validate_data_integrity(
+        self,
+        contract: Contract,
+        session: Session
+    ) -> Dict[str, Any]:
+        """Validate contract data integrity."""
+        try:
+            validation_result = {
+                "is_valid": True,
+                "errors": [],
+                "warnings": []
+            }
+
+            # Check if deal exists and is accessible
+            from ..models.deal import Deal
+            deal = session.get(Deal, contract.deal_id)
+            if not deal:
+                validation_result["is_valid"] = False
+                validation_result["errors"].append("Associated deal not found")
+
+            # Check if template exists and is active
+            template = session.get(Template, contract.template_id)
+            if not template:
+                validation_result["is_valid"] = False
+                validation_result["errors"].append("Associated template not found")
+            elif template.status != TemplateStatus.ACTIVE:
+                validation_result["warnings"].append("Associated template is not active")
+
+            # Check for orphaned files
+            if contract.generated_pdf_key:
+                try:
+                    # In production, check if file exists in storage
+                    pass
+                except Exception:
+                    validation_result["warnings"].append("Generated PDF file may be missing")
+
+            if contract.generated_docx_key:
+                try:
+                    # In production, check if file exists in storage
+                    pass
+                except Exception:
+                    validation_result["warnings"].append("Generated DOCX file may be missing")
+
+            # Check contract status consistency
+            if contract.status == "completed" and not contract.completed_at:
+                validation_result["warnings"].append("Contract marked as completed but no completion date set")
+
+            if contract.status == "sent_for_signature" and not contract.sent_for_signature_at:
+                validation_result["warnings"].append("Contract marked as sent for signature but no send date set")
+
+            return validation_result
+
+        except Exception as e:
+            logger.error(f"Data integrity validation failed: {e}")
+            return {
+                "is_valid": False,
+                "errors": [f"Data integrity validation error: {str(e)}"],
+                "warnings": []
+            }
+
+    async def _validate_compliance(
+        self,
+        contract: Contract,
+        template: Template,
+        session: Session
+    ) -> Dict[str, Any]:
+        """Validate contract compliance with regulations."""
+        try:
+            validation_result = {
+                "is_valid": True,
+                "errors": [],
+                "warnings": []
+            }
+
+            # Check template compliance rules
+            if template.ruleset:
+                compliance_rules = template.ruleset.get("compliance", {})
+
+                # Check required disclosures
+                if "required_disclosures" in compliance_rules:
+                    for disclosure in compliance_rules["required_disclosures"]:
+                        if disclosure not in (contract.variables or {}):
+                            validation_result["warnings"].append(
+                                f"Required disclosure '{disclosure}' not found in contract variables"
+                            )
+
+                # Check jurisdiction-specific rules
+                if "jurisdiction_rules" in compliance_rules:
+                    jurisdiction = (contract.variables or {}).get("jurisdiction", "")
+                    if jurisdiction in compliance_rules["jurisdiction_rules"]:
+                        jurisdiction_rules = compliance_rules["jurisdiction_rules"][jurisdiction]
+
+                        for rule in jurisdiction_rules.get("required_fields", []):
+                            if rule not in (contract.variables or {}):
+                                validation_result["errors"].append(
+                                    f"Jurisdiction '{jurisdiction}' requires field '{rule}'"
+                                )
+                                validation_result["is_valid"] = False
+
+            # Check for sensitive data handling
+            sensitive_fields = ["ssn", "tax_id", "bank_account", "credit_card"]
+            for field in sensitive_fields:
+                if field in (contract.variables or {}):
+                    validation_result["warnings"].append(
+                        f"Contract contains sensitive field '{field}' - ensure proper data protection"
+                    )
+
+            return validation_result
+
+        except Exception as e:
+            logger.error(f"Compliance validation failed: {e}")
+            return {
+                "is_valid": True,  # Don't fail on compliance validation errors
+                "errors": [],
+                "warnings": [f"Compliance validation error: {str(e)}"]
+            }
 
     def _evaluate_condition(self, condition: Dict[str, Any], variables: Dict[str, Any]) -> bool:
         """Evaluate a simple condition."""

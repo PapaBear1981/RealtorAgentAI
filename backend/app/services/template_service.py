@@ -51,6 +51,185 @@ class TemplateService:
         self.storage_client = get_storage_client()
         self.template_engine = get_template_engine()
 
+    async def create_template_with_inheritance(
+        self,
+        template_data: TemplateCreate,
+        user: User,
+        session: Session,
+        inherit_variables: bool = True,
+        inherit_rules: bool = True,
+        inherit_content: bool = False
+    ) -> TemplatePublic:
+        """
+        Create template with advanced inheritance capabilities.
+
+        Args:
+            template_data: Template creation data
+            user: User creating the template
+            session: Database session
+            inherit_variables: Whether to inherit variables from parent
+            inherit_rules: Whether to inherit business rules from parent
+            inherit_content: Whether to inherit content from parent
+
+        Returns:
+            TemplatePublic: Created template information
+        """
+        try:
+            # Validate template data
+            await self._validate_template_data(template_data, session)
+
+            # Handle template inheritance
+            if template_data.parent_template_id:
+                parent_template = session.get(Template, template_data.parent_template_id)
+                if not parent_template:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Parent template not found"
+                    )
+
+                # Advanced inheritance with selective property copying
+                template_data = await self._inherit_from_parent_advanced(
+                    template_data,
+                    parent_template,
+                    inherit_variables=inherit_variables,
+                    inherit_rules=inherit_rules,
+                    inherit_content=inherit_content
+                )
+
+            # Create template record
+            template = Template(
+                **template_data.dict(exclude={'variables'}),
+                created_by=user.id,
+                created_at=datetime.utcnow(),
+                is_current_version=True
+            )
+
+            # Handle variables with inheritance merging
+            if template_data.variables:
+                template.variables = [var.dict() for var in template_data.variables]
+
+            session.add(template)
+            session.commit()
+            session.refresh(template)
+
+            # Create initial version
+            await self._create_template_version(template, user, "Initial creation", session)
+
+            # Log creation
+            audit_log = AuditLog(
+                user_id=user.id,
+                actor=f"user:{user.id}",
+                action=AuditAction.TEMPLATE_CREATED,
+                success=True,
+                meta={
+                    "template_id": template.id,
+                    "template_name": template.name,
+                    "parent_template_id": template.parent_template_id
+                }
+            )
+            session.add(audit_log)
+            session.commit()
+
+            return self._to_public_model(template)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Template creation failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Template creation failed"
+            )
+
+    async def compose_template(
+        self,
+        base_template_id: int,
+        component_template_ids: List[int],
+        composition_rules: Dict[str, Any],
+        user: User,
+        session: Session
+    ) -> TemplatePublic:
+        """
+        Create a new template by composing multiple templates.
+
+        Args:
+            base_template_id: Base template ID
+            component_template_ids: List of component template IDs
+            composition_rules: Rules for composition
+            user: User creating the template
+            session: Database session
+
+        Returns:
+            TemplatePublic: Composed template information
+        """
+        try:
+            # Get base template
+            base_template = session.get(Template, base_template_id)
+            if not base_template:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Base template not found"
+                )
+
+            # Get component templates
+            component_templates = []
+            for comp_id in component_template_ids:
+                comp_template = session.get(Template, comp_id)
+                if not comp_template:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Component template {comp_id} not found"
+                    )
+                component_templates.append(comp_template)
+
+            # Compose template content
+            composed_content = await self._compose_template_content(
+                base_template,
+                component_templates,
+                composition_rules
+            )
+
+            # Merge variables from all templates
+            merged_variables = await self._merge_template_variables(
+                base_template,
+                component_templates,
+                composition_rules.get("variable_merge_strategy", "merge")
+            )
+
+            # Merge business rules
+            merged_rules = await self._merge_business_rules(
+                base_template,
+                component_templates,
+                composition_rules.get("rules_merge_strategy", "merge")
+            )
+
+            # Create composed template
+            composed_template_data = TemplateCreate(
+                name=composition_rules.get("name", f"Composed_{base_template.name}"),
+                version="1.0",
+                template_type=base_template.template_type,
+                status=TemplateStatus.DRAFT,
+                html_content=composed_content,
+                variables=merged_variables,
+                business_rules=merged_rules,
+                description=f"Composed from templates: {[t.name for t in [base_template] + component_templates]}"
+            )
+
+            return await self.create_template_with_inheritance(
+                composed_template_data,
+                user,
+                session
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Template composition failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Template composition failed"
+            )
+
     async def create_template(
         self,
         template_data: TemplateCreate,
@@ -661,6 +840,90 @@ class TemplateService:
             parent_template=parent_template,
             child_templates=[self._to_public_model(child) for child in child_templates]
         )
+
+    async def _inherit_from_parent_advanced(
+        self,
+        template_data: TemplateCreate,
+        parent_template: Template,
+        inherit_variables: bool = True,
+        inherit_rules: bool = True,
+        inherit_content: bool = False
+    ) -> TemplateCreate:
+        """Advanced template inheritance with selective property copying."""
+        try:
+            # Start with the provided template data
+            inherited_data = template_data.dict()
+
+            # Inherit variables if requested
+            if inherit_variables and parent_template.variables:
+                parent_vars = parent_template.variables or []
+                child_vars = template_data.variables or []
+
+                # Merge variables, child overrides parent
+                merged_vars = {}
+
+                # Add parent variables
+                for var in parent_vars:
+                    if isinstance(var, dict):
+                        merged_vars[var.get('name')] = var
+
+                # Override with child variables
+                for var in child_vars:
+                    if hasattr(var, 'name'):
+                        merged_vars[var.name] = var.dict()
+                    elif isinstance(var, dict):
+                        merged_vars[var.get('name')] = var
+
+                # Convert back to TemplateVariable objects
+                from ..models.template import TemplateVariable
+                inherited_data['variables'] = [
+                    TemplateVariable(**var_data) if isinstance(var_data, dict) else var_data
+                    for var_data in merged_vars.values()
+                ]
+
+            # Inherit business rules if requested
+            if inherit_rules and parent_template.business_rules:
+                parent_rules = parent_template.business_rules or {}
+                child_rules = template_data.business_rules or {}
+
+                # Deep merge business rules
+                merged_rules = self._deep_merge_dict(parent_rules, child_rules)
+                inherited_data['business_rules'] = merged_rules
+
+            # Inherit content if requested
+            if inherit_content:
+                if parent_template.html_content and not template_data.html_content:
+                    inherited_data['html_content'] = parent_template.html_content
+
+                if parent_template.docx_key and not template_data.docx_key:
+                    inherited_data['docx_key'] = parent_template.docx_key
+
+            # Inherit schema and ruleset
+            if parent_template.schema and not template_data.schema:
+                inherited_data['schema'] = parent_template.schema
+
+            if parent_template.ruleset:
+                parent_ruleset = parent_template.ruleset or {}
+                child_ruleset = template_data.ruleset or {}
+                inherited_data['ruleset'] = self._deep_merge_dict(parent_ruleset, child_ruleset)
+
+            return TemplateCreate(**inherited_data)
+
+        except Exception as e:
+            logger.error(f"Template inheritance failed: {e}")
+            raise TemplateManagementError(f"Failed to inherit from parent template: {str(e)}")
+
+    def _deep_merge_dict(self, base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+        """Deep merge two dictionaries."""
+        result = base.copy()
+
+        for key, value in override.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = self._deep_merge_dict(result[key], value)
+            else:
+                result[key] = value
+
+        return result
 
 
 # Global template service instance
