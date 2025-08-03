@@ -330,3 +330,6 @@ credentials.json
 prometheus_data/
 grafana_data/
 jaeger_data/
+# Allow frontend src lib utilities
+!frontend/src/lib/
+!frontend/src/lib/**
