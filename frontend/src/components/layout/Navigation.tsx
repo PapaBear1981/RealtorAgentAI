@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthStore } from "@/stores/auth"
 import Link from "next/link"
@@ -70,12 +71,13 @@ export function Navigation({ className }: NavigationProps) {
             <span className="text-sm text-gray-700">
               Welcome, {user.name}
             </span>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {user.role}
-            </span>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              Logout
-            </Button>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+            {user.role}
+          </span>
+          <ThemeToggle />
+          <Button onClick={handleLogout} variant="outline" size="sm">
+            Logout
+          </Button>
           </div>
         </div>
       </div>

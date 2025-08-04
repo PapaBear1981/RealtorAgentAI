@@ -2,6 +2,7 @@ import { AuthInitializer } from "@/components/auth/AuthInitializer"
 import { AuthenticatedAssistantAgent } from "@/components/help/AuthenticatedAssistantAgent"
 import { Toaster } from "@/components/ui/toaster"
 import "@/styles/globals.css"
+import { ThemeProvider } from "next-themes"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 
@@ -20,12 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <div className="min-h-screen bg-background font-sans antialiased">
-          <AuthInitializer />
-          {children}
-          <AuthenticatedAssistantAgent />
-          <Toaster />
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <div className="min-h-screen bg-background font-sans antialiased">
+            <AuthInitializer />
+            {children}
+            <AuthenticatedAssistantAgent />
+            <Toaster />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )
