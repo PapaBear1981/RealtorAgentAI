@@ -42,7 +42,9 @@ export function Navigation({ className }: NavigationProps) {
   }
 
   return (
-    <nav className={`bg-white shadow ${className}`}>
+    <nav
+      className={`sticky top-0 z-50 backdrop-blur bg-white/70 supports-backdrop-blur:bg-white/60 shadow ${className}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           {/* Logo and Brand */}
@@ -81,7 +83,7 @@ export function Navigation({ className }: NavigationProps) {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden">
+      <div className="md:hidden sticky top-0 z-50 backdrop-blur bg-white/70 supports-backdrop-blur:bg-white/60 shadow">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
           {navigationItems.map((item) => (
             <Link
