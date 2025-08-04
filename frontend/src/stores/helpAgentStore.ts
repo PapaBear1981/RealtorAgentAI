@@ -171,7 +171,7 @@ Just tell me what you'd like me to do!`,
       })
     }),
     {
-      name: 'assistant-agent-storage',
+      name: 'assistant-agent-storage-v2',
       partialize: (state) => ({
         isOpen: state.isOpen,
         messages: state.messages,

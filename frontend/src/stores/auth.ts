@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthStore>()(
               created_at: new Date().toISOString(),
             }
 
-            const mockToken = 'mock-jwt-token-' + Date.now()
+            const mockToken = 'mock-jwt-token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
 
             set({
               user: mockUser,

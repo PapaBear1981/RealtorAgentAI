@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Navigation } from "@/components/layout/Navigation"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { useCallback, useEffect, useState } from "react"
 
 interface Comment {
   id: string
@@ -219,7 +219,7 @@ export default function ReviewPage() {
     if (!replyContent.trim()) return
 
     const reply: Comment = {
-      id: Date.now().toString(),
+      id: `reply-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       author: 'Current User',
       content: replyContent,
       timestamp: new Date().toISOString(),
@@ -302,7 +302,7 @@ export default function ReviewPage() {
     if (!newComment.trim()) return
 
     const comment: Comment = {
-      id: Date.now().toString(),
+      id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       author: 'Current User',
       content: newComment,
       timestamp: new Date().toISOString(),
@@ -314,7 +314,7 @@ export default function ReviewPage() {
     setComments(prev => [...prev, comment])
     setNewComment('')
     setSelectedLine(null)
-    
+
     toast({
       title: "Comment Added",
       description: "Your comment has been added to the review.",
@@ -333,10 +333,10 @@ export default function ReviewPage() {
       const lineNumber = index + 1
       const lineChanges = changes.filter(change => change.lineNumber === lineNumber)
       const lineComments = getLineComments(lineNumber)
-      
+
       return (
         <div key={lineNumber} className="group relative">
-          <div 
+          <div
             className={`flex items-start space-x-4 py-1 px-2 rounded hover:bg-gray-50 cursor-pointer ${
               selectedLine === lineNumber ? 'bg-blue-50' : ''
             }`}
@@ -377,7 +377,7 @@ export default function ReviewPage() {
               {lineChanges.length === 0 && (
                 <div className="text-gray-900">{line}</div>
               )}
-              
+
               {/* Line Comments */}
               {lineComments.length > 0 && (
                 <div className="mt-2 space-y-2">
@@ -444,7 +444,7 @@ export default function ReviewPage() {
                 </div>
               )}
             </div>
-            
+
             {/* Comment indicator */}
             {lineComments.length > 0 && (
               <div className="flex-shrink-0">
@@ -463,7 +463,7 @@ export default function ReviewPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        
+
         {/* Page Header */}
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -741,8 +741,8 @@ export default function ReviewPage() {
                       />
                       <div className="flex justify-between items-center">
                         {selectedLine && (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => setSelectedLine(null)}
                           >

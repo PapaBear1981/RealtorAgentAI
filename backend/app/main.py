@@ -25,7 +25,8 @@ from .core.security import (
 )
 
 # Import routers
-from .api import auth, files, contracts, templates, signatures, webhooks, admin, tasks, model_router
+from .api import auth, files, contracts, templates, signatures, webhooks, admin, tasks, model_router, agent_orchestrator
+from .api.v1 import ai_agents, ai_agents_ws, advanced_agents, performance, analytics
 
 # Setup logging
 setup_logging()
@@ -143,6 +144,10 @@ app = FastAPI(
             "name": "ai-agents",
             "description": "AI agent operations and orchestration",
         },
+        {
+            "name": "analytics",
+            "description": "Analytics and reporting operations",
+        },
     ],
     lifespan=lifespan,
 )
@@ -238,6 +243,12 @@ app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(model_router.router, prefix="/ai-agents/model-router", tags=["ai-agents"])
+app.include_router(agent_orchestrator.router, tags=["ai-agents"])
+app.include_router(ai_agents.router, prefix="/api/v1", tags=["ai-agents"])
+app.include_router(ai_agents_ws.ws_router, prefix="/api/v1", tags=["ai-agents-websocket"])
+app.include_router(advanced_agents.router, prefix="/api/v1", tags=["advanced-ai-agents"])
+app.include_router(performance.router, prefix="/api/v1", tags=["performance-optimization"])
+app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
 
 
 if __name__ == "__main__":

@@ -1,17 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { Navigation } from "@/components/layout/Navigation"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
-import { Navigation } from "@/components/layout/Navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState } from "react"
 
 interface User {
   id: string
@@ -167,12 +167,12 @@ export default function AdminPage() {
   }, [])
 
   const handleUserStatusToggle = (userId: string) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId 
+    setUsers(prev => prev.map(user =>
+      user.id === userId
         ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
         : user
     ))
-    
+
     toast({
       title: "User Status Updated",
       description: "User status has been changed successfully.",
@@ -185,7 +185,7 @@ export default function AdminPage() {
         ? { ...template, status: newStatus }
         : template
     ))
-    
+
     toast({
       title: "Template Status Updated",
       description: "Template status has been changed successfully.",
@@ -228,7 +228,7 @@ export default function AdminPage() {
               versions: [
                 ...t.versions,
                 {
-                  id: Date.now().toString(),
+                  id: `version-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                   version: (parseFloat(t.version) + 0.1).toFixed(1),
                   createdAt: new Date().toISOString(),
                   author: 'Admin User'
@@ -283,7 +283,7 @@ export default function AdminPage() {
     <ProtectedRoute requiredRole="admin">
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        
+
         {/* Page Header */}
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -320,7 +320,7 @@ export default function AdminPage() {
                       <CardContent>
                         <div className="space-y-4">
                           {users.map((user) => (
-                            <div 
+                            <div
                               key={user.id}
                               className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
                                 selectedUser?.id === user.id ? 'ring-2 ring-blue-500' : ''

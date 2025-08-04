@@ -237,6 +237,40 @@ def validate_refresh_token(refresh_token: str) -> Dict[str, Any]:
         )
 
 
+def get_current_user():
+    """Get current user from JWT token (placeholder implementation)."""
+    # This is a placeholder implementation
+    # In a real application, you would decode and validate the JWT token
+    from ..models.user import User
+
+    user = User()
+    user.id = "test_user_123"
+    user.email = "test@example.com"
+    user.full_name = "Test User"
+    user.is_active = True
+    user.role = "basic_user"
+    return user
+
+
+async def get_current_user_ws(token: str):
+    """Get current user from WebSocket token."""
+    # This is a placeholder implementation for WebSocket authentication
+    # In a real application, you would decode and validate the JWT token
+    from ..models.user import User
+
+    if not token:
+        raise Exception("Authentication token required")
+
+    # For now, return a mock user based on token
+    user = User()
+    user.id = token  # Simplified - use token as user ID
+    user.email = f"{token}@example.com"
+    user.full_name = f"User {token}"
+    user.is_active = True
+    user.role = "basic_user"
+    return user
+
+
 # Export functions
 __all__ = [
     "hash_password",
@@ -247,4 +281,6 @@ __all__ = [
     "get_token_subject",
     "create_token_response",
     "validate_refresh_token",
+    "get_current_user",
+    "get_current_user_ws",
 ]
