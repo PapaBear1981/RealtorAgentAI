@@ -1,9 +1,17 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { motion } from "framer-motion"
+
+const MotionButton = motion(Button)
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-24">
+    <motion.div
+      className="flex min-h-screen flex-col items-center justify-center p-24"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h1 className="text-4xl font-bold text-center mb-8">
           RealtorAgentAI
@@ -14,9 +22,9 @@ export default function HomePage() {
 
         <div className="flex justify-center mb-12">
           <Link href="/login">
-            <Button size="lg">
+            <MotionButton size="lg" whileHover={{ scale: 1.05 }}>
               Get Started
-            </Button>
+            </MotionButton>
           </Link>
         </div>
 
@@ -41,6 +49,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
