@@ -413,8 +413,8 @@ async def get_system_configuration(
             "refresh_token_expire_days": settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
         },
         "cors_settings": {
-            "allow_origins": settings.CORS_ORIGINS,
-            "allow_credentials": settings.CORS_ALLOW_CREDENTIALS
+            "allow_origins": settings.ALLOWED_HOSTS,
+            "allow_credentials": True  # Hardcoded as configured in main.py
         },
         "file_settings": {
             "max_file_size": settings.MAX_FILE_SIZE,
@@ -592,6 +592,122 @@ async def update_model_routing(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="Model routing updates not yet implemented"
     )
+
+
+# Template Management Endpoints
+@router.get("/templates", response_model=Dict[str, Any])
+async def list_templates(
+    status: Optional[TemplateStatus] = Query(None, description="Filter by template status"),
+    template_type: Optional[TemplateType] = Query(None, description="Filter by template type"),
+    search: Optional[str] = Query(None, description="Search in name and description"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum results"),
+    offset: int = Query(0, ge=0, description="Results offset"),
+    current_user: User = Depends(require_admin()),
+    session: Session = Depends(get_session)
+):
+    """
+    List templates with filtering and pagination.
+
+    Allows administrators to view all templates in the system with
+    comprehensive filtering options for management and oversight.
+
+    Args:
+        status: Filter by template status
+        template_type: Filter by template type
+        search: Search query for name and description
+        limit: Maximum results
+        offset: Results offset
+        current_user: Current authenticated admin user
+        session: Database session
+
+    Returns:
+        Dict: Templates list with metadata
+    """
+    return await admin_service.list_templates(
+        current_user, session, status, template_type, search, limit, offset
+    )
+
+
+@router.get("/templates/{template_id}", response_model=Union[TemplatePublic, TemplateWithDetails])
+async def get_template(
+    template_id: int,
+    include_details: bool = Query(False, description="Include detailed template information"),
+    current_user: User = Depends(require_admin()),
+    session: Session = Depends(get_session)
+):
+    """
+    Get template details by ID.
+
+    Allows administrators to view detailed information about
+    any template in the system.
+
+    Args:
+        template_id: Template ID to retrieve
+        include_details: Whether to include detailed information
+        current_user: Current authenticated admin user
+        session: Database session
+
+    Returns:
+        Union[TemplatePublic, TemplateWithDetails]: Template information
+    """
+    return await admin_service.get_template(template_id, current_user, session, include_details)
+
+
+@router.patch("/templates/{template_id}/status", response_model=TemplatePublic)
+async def update_template_status(
+    template_id: int,
+    status_update: Dict[str, TemplateStatus],
+    current_user: User = Depends(require_admin()),
+    session: Session = Depends(get_session)
+):
+    """
+    Update template status (activate, deactivate, archive).
+
+    Allows administrators to change template status for
+    lifecycle management and access control.
+
+    Args:
+        template_id: Template ID to update
+        status_update: New status information
+        current_user: Current authenticated admin user
+        session: Database session
+
+    Returns:
+        TemplatePublic: Updated template information
+    """
+    if "status" not in status_update:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status field is required"
+        )
+
+    new_status = status_update["status"]
+    return await admin_service.update_template_status(template_id, new_status, current_user, session)
+
+
+@router.get("/templates/{template_id}/analytics", response_model=Dict[str, Any])
+async def get_template_analytics(
+    template_id: int,
+    days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
+    current_user: User = Depends(require_admin()),
+    session: Session = Depends(get_session)
+):
+    """
+    Get template usage analytics.
+
+    Provides comprehensive analytics about template usage including
+    contract generation statistics and usage patterns.
+
+    Args:
+        template_id: Template ID to analyze
+        days: Number of days to analyze
+        current_user: Current authenticated admin user
+        session: Database session
+
+    Returns:
+        Dict: Template usage analytics
+    """
+    return await admin_service.get_template_usage_analytics(template_id, current_user, session, days)
 
 
 # Export router

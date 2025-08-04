@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 from .core.config import get_settings
 from .core.database import create_db_and_tables
 from .core.logging import setup_logging
+from .core.startup_validation import get_startup_validation_service
 from .core.security import (
     rate_limit_middleware,
     security_headers_middleware,
@@ -75,6 +76,32 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize background processing: {e}")
         # Continue startup even if background processing fails
+
+    # Run comprehensive startup validation
+    try:
+        startup_service = get_startup_validation_service()
+        validation_result = await startup_service.validate_startup_sequence()
+
+        if validation_result.overall_status == "healthy":
+            logger.info("All startup validation checks passed successfully")
+        elif validation_result.overall_status == "degraded":
+            logger.warning(
+                "Startup validation completed with warnings",
+                warnings=validation_result.warnings,
+                degraded_services=[name for name, service in validation_result.services.items()
+                                 if service.status == "degraded"]
+            )
+        else:
+            logger.error(
+                "Startup validation failed - some services are unhealthy",
+                critical_errors=validation_result.critical_errors,
+                unhealthy_services=[name for name, service in validation_result.services.items()
+                                  if service.status == "unhealthy"]
+            )
+
+    except Exception as e:
+        logger.error(f"Startup validation failed: {e}")
+        # Continue startup even if validation fails
 
     yield
 
@@ -199,21 +226,101 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Health check endpoint
+# Enhanced Health Check Endpoints
+
 @app.get("/health", tags=["system"])
 async def health_check():
     """
-    Health check endpoint for monitoring and load balancers.
+    Basic health check endpoint for monitoring and load balancers.
 
-    Returns the current status of the application and its dependencies.
+    This endpoint provides a quick health status without detailed service checks.
+    Use /health/detailed for comprehensive health information.
     """
+    startup_service = get_startup_validation_service()
+
+    # Perform quick health check
+    health_status = await startup_service.perform_health_check(include_ai_agents=False)
+
     return {
-        "status": "healthy",
+        "status": health_status.overall_status.value,
         "timestamp": time.time(),
         "version": "0.1.0",
         "environment": settings.ENVIRONMENT,
-        "database": "connected",  # Will be enhanced with actual DB health check
+        "startup_complete": health_status.startup_complete,
+        "ready_for_traffic": health_status.ready_for_traffic,
+        "services_healthy": len([s for s in health_status.services.values()
+                               if s.status.value == "healthy"]),
+        "total_services": len(health_status.services)
     }
+
+
+@app.get("/health/detailed", tags=["system"])
+async def detailed_health_check():
+    """
+    Detailed health check endpoint with comprehensive service status.
+
+    Returns detailed information about all system components and their health status.
+    """
+    startup_service = get_startup_validation_service()
+
+    # Perform comprehensive health check
+    health_status = await startup_service.perform_health_check(include_ai_agents=True)
+
+    # Format service details for response
+    services = {}
+    for name, service in health_status.services.items():
+        services[name] = {
+            "status": service.status.value,
+            "response_time_ms": service.response_time_ms,
+            "last_check": service.last_check.isoformat(),
+            "details": service.details,
+            "error_message": service.error_message
+        }
+
+    return {
+        "overall_status": health_status.overall_status.value,
+        "startup_complete": health_status.startup_complete,
+        "ready_for_traffic": health_status.ready_for_traffic,
+        "startup_time": health_status.startup_time.isoformat() if health_status.startup_time else None,
+        "last_health_check": health_status.last_health_check.isoformat() if health_status.last_health_check else None,
+        "services": services,
+        "critical_errors": health_status.critical_errors,
+        "warnings": health_status.warnings,
+        "timestamp": time.time(),
+        "version": "0.1.0",
+        "environment": settings.ENVIRONMENT
+    }
+
+
+@app.get("/health/ready", tags=["system"])
+async def readiness_probe():
+    """
+    Kubernetes readiness probe endpoint.
+
+    Returns 200 if the application is ready to serve traffic, 503 otherwise.
+    """
+    startup_service = get_startup_validation_service()
+    readiness_status = startup_service.get_readiness_status()
+
+    if readiness_status["ready"]:
+        return readiness_status
+    else:
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Application not ready to serve traffic"
+        )
+
+
+@app.get("/health/live", tags=["system"])
+async def liveness_probe():
+    """
+    Kubernetes liveness probe endpoint.
+
+    Returns 200 if the application is alive and running.
+    """
+    startup_service = get_startup_validation_service()
+    return startup_service.get_liveness_status()
 
 
 # Root endpoint
