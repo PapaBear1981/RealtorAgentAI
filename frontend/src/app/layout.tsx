@@ -1,6 +1,7 @@
 import { AuthInitializer } from "@/components/auth/AuthInitializer"
 import { AuthenticatedAssistantAgent } from "@/components/help/AuthenticatedAssistantAgent"
 import { Toaster } from "@/components/ui/toaster"
+import { CommandPalette } from "@/components/ui/command-palette"
 import "@/styles/globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -25,6 +26,7 @@ export default function RootLayout({
           {children}
           <AuthenticatedAssistantAgent />
           <Toaster />
+          <CommandPalette />
         </div>
       </body>
     </html>

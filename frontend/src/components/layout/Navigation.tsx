@@ -6,6 +6,27 @@ import { useAuthStore } from "@/stores/auth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
+export interface NavigationItem {
+  href: string
+  label: string
+}
+
+export const getNavigationItems = (user?: { role: string } | null): NavigationItem[] => {
+  const items: NavigationItem[] = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/documents", label: "Documents" },
+    { href: "/contracts", label: "Contracts" },
+    { href: "/review", label: "Review" },
+    { href: "/signatures", label: "Signatures" },
+  ]
+
+  if (user?.role === "admin") {
+    items.push({ href: "/admin", label: "Admin" })
+  }
+
+  return items
+}
+
 interface NavigationProps {
   className?: string
 }
@@ -28,18 +49,7 @@ export function Navigation({ className }: NavigationProps) {
     return null
   }
 
-  const navigationItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/documents", label: "Documents" },
-    { href: "/contracts", label: "Contracts" },
-    { href: "/review", label: "Review" },
-    { href: "/signatures", label: "Signatures" },
-  ]
-
-  // Add admin-only items
-  if (user.role === 'admin') {
-    navigationItems.push({ href: "/admin", label: "Admin" })
-  }
+  const navigationItems = getNavigationItems(user)
 
   return (
     <nav className={`bg-white shadow ${className}`}>
