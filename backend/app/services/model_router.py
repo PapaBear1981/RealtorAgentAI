@@ -20,8 +20,10 @@ from openai import OpenAI, AsyncOpenAI
 from anthropic import Anthropic, AsyncAnthropic
 
 from ..core.config import get_settings
+from ..core.ai_agent_logging import get_ai_agent_logger, log_llm_interaction
 
 logger = structlog.get_logger(__name__)
+ai_logger = get_ai_agent_logger(__name__)
 settings = get_settings()
 
 
@@ -103,6 +105,12 @@ class ModelRouter:
         self.last_health_check = datetime.utcnow()
         self.health_check_interval = timedelta(seconds=self.settings.MODEL_ROUTER_HEALTH_CHECK_INTERVAL)
 
+    async def initialize(self):
+        """Initialize the model router asynchronously."""
+        # Perform any async initialization if needed
+        await self.health_check()
+        logger.info("Model router async initialization completed")
+
     def _init_clients(self):
         """Initialize AI provider clients."""
         # OpenRouter client (unified access)
@@ -179,6 +187,15 @@ class ModelRouter:
                     context_length=128000,
                     capabilities=["text_generation", "analysis"],
                     performance_score=0.85
+                ),
+                "qwen/qwen3-235b-a22b-thinking-2507": ModelInfo(
+                    id="qwen/qwen3-235b-a22b-thinking-2507",
+                    name="Qwen3 235B A22B Thinking",
+                    provider=ModelProvider.OPENROUTER,
+                    cost_per_token=0.00002,  # Estimated cost for large model
+                    context_length=32768,
+                    capabilities=["text_generation", "reasoning", "analysis", "thinking", "complex_reasoning"],
+                    performance_score=0.98  # High performance for thinking model
                 )
             })
 
@@ -274,6 +291,7 @@ class ModelRouter:
         logger.info(f"Selected model: {selected.id} (strategy: {self.strategy.value})")
         return selected.id
 
+    @log_llm_interaction("model_router")
     async def generate_response(self, request: ModelRequest) -> ModelResponse:
         """
         Generate response using the selected model with fallback support.
@@ -562,6 +580,33 @@ class ModelRouter:
                 model_info.is_available = True
 
         logger.info("Health check completed")
+
+    async def health_check(self):
+        """Perform health check on all providers."""
+        logger.info("Starting health check")
+        # For now, just check if clients are initialized
+        if self.openrouter_async_client:
+            logger.info("OpenRouter client available")
+        if self.openai_async_client:
+            logger.info("OpenAI client available")
+        if self.anthropic_async_client:
+            logger.info("Anthropic client available")
+        logger.info("Health check completed")
+
+    async def get_available_models(self) -> List[Dict[str, Any]]:
+        """Get list of available models."""
+        return [
+            {
+                "id": model_info.id,
+                "name": model_info.name,
+                "provider": model_info.provider.value,
+                "cost_per_token": model_info.cost_per_token,
+                "context_length": model_info.context_length,
+                "capabilities": model_info.capabilities,
+                "is_available": model_info.is_available
+            }
+            for model_info in self.models.values()
+        ]
 
 
 # Global model router instance
