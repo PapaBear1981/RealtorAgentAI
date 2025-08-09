@@ -219,7 +219,7 @@ export default function ContractsPage() {
                           <div key={variable.name} className="space-y-2">
                             <Label htmlFor={variable.name}>
                               {variable.label}
-                              {variable.required && <span className="text-red-500 ml-1">*</span>}
+                              {variable.required && <span className="text-destructive ml-1">*</span>}
                             </Label>
 
                             {variable.type === 'text' && (

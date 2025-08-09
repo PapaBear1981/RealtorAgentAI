@@ -43,16 +43,25 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
-// Mock next-themes
+// Mock next-themes with stateful behavior
+let __currentTheme = 'light'
+const __setTheme = jest.fn((next) => { __currentTheme = next })
+
 jest.mock('next-themes', () => ({
   useTheme: () => ({
-    theme: 'light',
-    setTheme: jest.fn(),
-    resolvedTheme: 'light',
+    theme: __currentTheme,
+    setTheme: __setTheme,
+    resolvedTheme: __currentTheme,
     themes: ['light', 'dark'],
     systemTheme: 'light',
   }),
   ThemeProvider: ({ children }) => children,
+  // Expose mocks for tests that need direct access
+  __mocks: {
+    get theme() { return __currentTheme },
+    setTheme: __setTheme,
+    reset: () => { __currentTheme = 'light'; __setTheme.mockClear() }
+  },
 }))
 
 // Mock window.matchMedia
@@ -72,7 +81,10 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
+  constructor(callback, options) {
+    this.callback = callback
+    this.options = options
+  }
   disconnect() {}
   observe() {}
   unobserve() {}
@@ -80,7 +92,9 @@ global.IntersectionObserver = class IntersectionObserver {
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor() {}
+  constructor(callback) {
+    this.callback = callback
+  }
   disconnect() {}
   observe() {}
   unobserve() {}

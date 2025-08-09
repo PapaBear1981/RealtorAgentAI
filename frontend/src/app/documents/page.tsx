@@ -368,7 +368,7 @@ export default function DocumentsPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {uploadedFiles.map((uploadedFile) => (
-                      <div key={uploadedFile.id} className="border rounded-lg p-4">
+                      <div key={uploadedFile.id} className="border border-border rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3">
