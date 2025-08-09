@@ -137,15 +137,15 @@ export default function ContractsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
 
         {/* Page Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-card shadow-sm border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-3xl font-bold text-gray-900">Contract Generator</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">Contract Generator</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Generate standardized contracts from templates and extracted data
               </p>
             </div>
@@ -175,8 +175,8 @@ export default function ContractsPage() {
                       {CONTRACT_TEMPLATES.map((template) => (
                         <Card
                           key={template.id}
-                          className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                            selectedTemplate?.id === template.id ? 'ring-2 ring-blue-500' : ''
+                          className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                            selectedTemplate?.id === template.id ? 'ring-2 ring-primary' : ''
                           }`}
                           onClick={() => handleTemplateSelect(template)}
                         >
@@ -192,7 +192,7 @@ export default function ContractsPage() {
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               {template.variables.length} variables to fill
                             </p>
                           </CardContent>
@@ -219,7 +219,7 @@ export default function ContractsPage() {
                           <div key={variable.name} className="space-y-2">
                             <Label htmlFor={variable.name}>
                               {variable.label}
-                              {variable.required && <span className="text-red-500 ml-1">*</span>}
+                              {variable.required && <span className="text-destructive ml-1">*</span>}
                             </Label>
 
                             {variable.type === 'text' && (
@@ -305,8 +305,8 @@ export default function ContractsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="bg-white border rounded-lg p-6 min-h-96">
-                        <pre className="whitespace-pre-wrap font-mono text-sm">
+                      <div className="bg-card border border-border rounded-lg p-6 min-h-96">
+                        <pre className="whitespace-pre-wrap font-mono text-sm text-foreground">
                           {generatedContract}
                         </pre>
                       </div>

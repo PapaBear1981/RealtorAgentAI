@@ -169,15 +169,15 @@ export default function SignaturesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
 
         {/* Page Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-card shadow-sm border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-3xl font-bold text-gray-900">Signature Tracker</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">Signature Tracker</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Track multi-party signatures with audit trails and notifications
               </p>
             </div>
@@ -201,15 +201,15 @@ export default function SignaturesPage() {
                       {signatureRequests.map((request) => (
                         <div
                           key={request.id}
-                          className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
-                            selectedRequest?.id === request.id ? 'ring-2 ring-blue-500' : ''
+                          className={`border border-border rounded-lg p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                            selectedRequest?.id === request.id ? 'ring-2 ring-primary' : ''
                           }`}
                           onClick={() => setSelectedRequest(request)}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="font-medium text-gray-900">{request.documentName}</h3>
-                              <p className="text-sm text-gray-600 mt-1">{request.documentType}</p>
+                              <h3 className="font-medium text-foreground">{request.documentName}</h3>
+                              <p className="text-sm text-muted-foreground mt-1">{request.documentType}</p>
 
                               <div className="flex items-center space-x-4 mt-3">
                                 <Badge variant={getStatusColor(request.status)}>
@@ -225,7 +225,7 @@ export default function SignaturesPage() {
 
                               {/* Progress */}
                               <div className="mt-3">
-                                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                <div className="flex justify-between text-sm text-muted-foreground mb-1">
                                   <span>Completion Progress</span>
                                   <span>{request.completionPercentage}%</span>
                                 </div>
@@ -234,7 +234,7 @@ export default function SignaturesPage() {
 
                               {/* Party Avatars */}
                               <div className="flex items-center space-x-2 mt-3">
-                                <span className="text-sm text-gray-600">Parties:</span>
+                                <span className="text-sm text-muted-foreground">Parties:</span>
                                 {request.parties.map((party) => (
                                   <div key={party.id} className="flex items-center space-x-1">
                                     <Avatar className="w-6 h-6">
@@ -274,22 +274,22 @@ export default function SignaturesPage() {
                       <div className="space-y-4">
                         {/* Document Info */}
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Document Information</h4>
+                          <h4 className="font-medium text-foreground mb-2">Document Information</h4>
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Type:</span>
+                              <span className="text-muted-foreground">Type:</span>
                               <span>{selectedRequest.documentType}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Created:</span>
+                              <span className="text-muted-foreground">Created:</span>
                               <span>{new Date(selectedRequest.createdAt).toLocaleDateString()}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Due Date:</span>
+                              <span className="text-muted-foreground">Due Date:</span>
                               <span>{new Date(selectedRequest.dueDate).toLocaleDateString()}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Status:</span>
+                              <span className="text-muted-foreground">Status:</span>
                               <Badge variant={getStatusColor(selectedRequest.status)}>
                                 {selectedRequest.status.replace('-', ' ')}
                               </Badge>
@@ -302,7 +302,7 @@ export default function SignaturesPage() {
                           <h4 className="font-medium text-gray-900 mb-2">Signing Parties</h4>
                           <div className="space-y-3">
                             {selectedRequest.parties.map((party) => (
-                              <div key={party.id} className="border rounded-lg p-3">
+                              <div key={party.id} className="border border-border rounded-lg p-3">
                                 <div className="flex items-start justify-between">
                                   <div className="flex items-center space-x-3">
                                     <Avatar className="w-8 h-8">
@@ -312,8 +312,8 @@ export default function SignaturesPage() {
                                     </Avatar>
                                     <div>
                                       <p className="font-medium text-sm">{party.name}</p>
-                                      <p className="text-xs text-gray-600">{party.role}</p>
-                                      <p className="text-xs text-gray-500">{party.email}</p>
+                                      <p className="text-xs text-muted-foreground">{party.role}</p>
+                                      <p className="text-xs text-muted-foreground/70">{party.email}</p>
                                     </div>
                                   </div>
                                   <Badge variant={getPartyStatusColor(party.status)}>
@@ -365,7 +365,7 @@ export default function SignaturesPage() {
                 ) : (
                   <Card>
                     <CardContent className="flex items-center justify-center h-64">
-                      <p className="text-gray-500">Select a signature request to view details</p>
+                      <p className="text-muted-foreground">Select a signature request to view details</p>
                     </CardContent>
                   </Card>
                 )}
