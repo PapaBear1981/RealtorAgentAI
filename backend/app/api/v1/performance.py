@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 import structlog
 
-from ...core.auth import get_current_user
+from ...core.dependencies import get_current_user
 from ...core.ai_agent_auth import verify_admin_access
 from ...models.user import User
 from ...services.performance.load_balancer import get_load_balancer
@@ -65,13 +65,13 @@ async def get_load_balancer_overview(
     try:
         load_balancer = get_load_balancer()
         overview = load_balancer.get_system_overview()
-        
+
         return {
             "status": "success",
             "data": overview,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get load balancer overview: {e}")
         raise HTTPException(
@@ -89,19 +89,19 @@ async def get_pool_statistics(
     try:
         load_balancer = get_load_balancer()
         stats = load_balancer.get_pool_statistics(pool_id)
-        
+
         if not stats:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Pool {pool_id} not found"
             )
-        
+
         return {
             "status": "success",
             "data": stats,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -122,13 +122,13 @@ async def get_cache_statistics(
     try:
         cache_manager = get_cache_manager()
         stats = cache_manager.get_performance_stats()
-        
+
         return {
             "status": "success",
             "data": stats,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get cache statistics: {e}")
         raise HTTPException(
@@ -146,7 +146,7 @@ async def invalidate_cache(
     try:
         cache_manager = get_cache_manager()
         invalidated_count = await cache_manager.invalidate_by_pattern(request.pattern)
-        
+
         return {
             "status": "success",
             "message": f"Invalidated {invalidated_count} cache entries",
@@ -154,7 +154,7 @@ async def invalidate_cache(
             "invalidated_count": invalidated_count,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to invalidate cache: {e}")
         raise HTTPException(
@@ -172,14 +172,14 @@ async def warm_cache(
     try:
         cache_manager = get_cache_manager()
         warmed_count = await cache_manager.warm_cache(keys)
-        
+
         return {
             "status": "success",
             "message": f"Warmed cache with {warmed_count} entries",
             "warmed_count": warmed_count,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to warm cache: {e}")
         raise HTTPException(
@@ -198,13 +198,13 @@ async def get_database_statistics(
     try:
         db_optimizer = get_database_optimizer()
         stats = db_optimizer.get_performance_stats()
-        
+
         return {
             "status": "success",
             "data": stats,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get database statistics: {e}")
         raise HTTPException(
@@ -223,7 +223,7 @@ async def get_slow_queries(
     try:
         db_optimizer = get_database_optimizer()
         slow_queries = await db_optimizer.get_slow_queries(threshold_seconds, limit)
-        
+
         return {
             "status": "success",
             "data": {
@@ -233,7 +233,7 @@ async def get_slow_queries(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get slow queries: {e}")
         raise HTTPException(
@@ -250,7 +250,7 @@ async def get_optimization_recommendations(
     try:
         db_optimizer = get_database_optimizer()
         recommendations = db_optimizer.get_optimization_recommendations()
-        
+
         return {
             "status": "success",
             "data": {
@@ -259,7 +259,7 @@ async def get_optimization_recommendations(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get optimization recommendations: {e}")
         raise HTTPException(
@@ -279,13 +279,13 @@ async def get_scaling_overview(
     try:
         scaling_manager = get_scaling_manager()
         overview = scaling_manager.get_service_overview(service_name)
-        
+
         return {
             "status": "success",
             "data": overview,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get scaling overview: {e}")
         raise HTTPException(
@@ -304,7 +304,7 @@ async def get_scaling_history(
     try:
         scaling_manager = get_scaling_manager()
         history = scaling_manager.get_scaling_history(service_name, limit)
-        
+
         return {
             "status": "success",
             "data": {
@@ -313,7 +313,7 @@ async def get_scaling_history(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get scaling history: {e}")
         raise HTTPException(
@@ -332,13 +332,13 @@ async def get_memory_statistics(
     try:
         memory_manager = get_memory_manager()
         stats = memory_manager.get_memory_stats()
-        
+
         return {
             "status": "success",
             "data": stats,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get memory statistics: {e}")
         raise HTTPException(
@@ -355,7 +355,7 @@ async def get_memory_leaks(
     try:
         memory_manager = get_memory_manager()
         leaks = memory_manager.get_memory_leaks()
-        
+
         return {
             "status": "success",
             "data": {
@@ -364,7 +364,7 @@ async def get_memory_leaks(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get memory leaks: {e}")
         raise HTTPException(
@@ -382,7 +382,7 @@ async def get_memory_alerts(
     try:
         memory_manager = get_memory_manager()
         alerts = memory_manager.get_recent_alerts(hours)
-        
+
         return {
             "status": "success",
             "data": {
@@ -392,7 +392,7 @@ async def get_memory_alerts(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get memory alerts: {e}")
         raise HTTPException(
@@ -411,13 +411,13 @@ async def get_monitoring_dashboard(
     try:
         monitoring_system = get_monitoring_system()
         dashboard_data = monitoring_system.get_dashboard_data()
-        
+
         return {
             "status": "success",
             "data": dashboard_data,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get monitoring dashboard: {e}")
         raise HTTPException(
@@ -436,7 +436,7 @@ async def get_metric_history(
     try:
         monitoring_system = get_monitoring_system()
         history = monitoring_system.get_metric_history(metric_name, hours)
-        
+
         return {
             "status": "success",
             "data": {
@@ -447,7 +447,7 @@ async def get_metric_history(
             },
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get metric history: {e}")
         raise HTTPException(
@@ -471,7 +471,7 @@ async def get_comprehensive_health_check(
         scaling_manager = get_scaling_manager()
         memory_manager = get_memory_manager()
         monitoring_system = get_monitoring_system()
-        
+
         health_data = {
             "load_balancer": {
                 "status": "healthy",
@@ -502,10 +502,10 @@ async def get_comprehensive_health_check(
                 "active_alerts": monitoring_system.get_dashboard_data().get("alerts", {}).get("active", {}).get("total", 0)
             }
         }
-        
+
         # Determine overall health status
         overall_status = "healthy"
-        
+
         # Check for critical conditions
         if health_data["memory"]["usage_percent"] > 90:
             overall_status = "warning"
@@ -513,7 +513,7 @@ async def get_comprehensive_health_check(
             overall_status = "critical"
         if health_data["monitoring"]["active_alerts"] > 5:
             overall_status = "warning"
-        
+
         return {
             "status": "success",
             "data": {
@@ -522,7 +522,7 @@ async def get_comprehensive_health_check(
                 "timestamp": datetime.utcnow().isoformat()
             }
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get comprehensive health check: {e}")
         raise HTTPException(

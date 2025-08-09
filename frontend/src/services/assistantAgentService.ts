@@ -1,7 +1,6 @@
 import { useAssistantAgentStore } from '@/stores/helpAgentStore'
 import { generateUniqueId } from '@/utils/idGenerator'
 import { apiClient } from './apiClient'
-import { contractService } from './contractService'
 import { documentService } from './documentService'
 
 export interface ActionRequest {
@@ -91,7 +90,7 @@ class AssistantAgentService {
   }
 
   private async fillContract(request: ActionRequest, actionId: string): Promise<ActionResult> {
-    const { contractType, sourceFiles, dealName, templateId, dealId } = request.parameters
+    const { contractType, sourceFiles, dealName } = request.parameters
 
     try {
       // Step 1: Analyze source documents
@@ -131,7 +130,7 @@ class AssistantAgentService {
         contract_type: contractType,
         source_data: documentData,
         deal_name: dealName,
-        template_id: templateId,
+        // template_id: templateId,  // Removed - not available in parameters
       })
 
       // Step 3: Create or update contract
@@ -144,13 +143,14 @@ class AssistantAgentService {
       })
 
       let contract
-      if (dealId && templateId) {
-        contract = await contractService.createContract({
-          deal_id: dealId,
-          template_id: templateId,
-          variables: aiResponse.data.extracted_variables,
-        })
-      }
+      // Contract creation disabled - templateId and dealId not available in parameters
+      // if (dealId && templateId) {
+      //   contract = await contractService.createContract({
+      //     deal_id: dealId,
+      //     template_id: templateId,
+      //     variables: aiResponse.data.extracted_variables,
+      //   })
+      // }
 
       // Step 4: Validation
       this.store.getState().updateAction(actionId, { progress: 90 })
@@ -167,7 +167,7 @@ class AssistantAgentService {
           contractType,
           filledFields: aiResponse.data.extracted_variables,
           sourceFiles,
-          contractId: contract?.id || generateUniqueId('contract'),
+          contractId: generateUniqueId('contract'),  // contract?.id || generateUniqueId('contract'),
           confidence: aiResponse.data.confidence || 0.85,
           aiAgentResponse: aiResponse.data,
         }

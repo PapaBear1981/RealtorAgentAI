@@ -15,7 +15,7 @@ from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field
 import structlog
 
-from ...core.auth import get_current_user
+from ...core.dependencies import get_current_user
 from ...models.user import User
 from ...services.agent_orchestrator import get_agent_orchestrator, AgentRole
 from ...services.agent_memory import get_memory_manager
@@ -94,7 +94,7 @@ async def get_agents_overview(
     """Get overview of available AI agents and their capabilities."""
     try:
         orchestrator = get_agent_orchestrator()
-        
+
         agents_info = {}
         for role in AgentRole:
             tools = get_tools_for_agent(role.value)
@@ -104,14 +104,14 @@ async def get_agents_overview(
                 "tools_count": len(tools),
                 "capabilities": _get_agent_capabilities(role)
             }
-        
+
         return {
             "agents": agents_info,
             "total_agents": len(AgentRole),
             "system_status": "operational",
             "user_id": current_user.id
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get agents overview: {e}")
         raise HTTPException(
@@ -133,23 +133,23 @@ async def get_agent_tools(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid agent role: {agent_role}"
             )
-        
+
         tools = get_tools_for_agent(agent_role)
         tools_info = []
-        
+
         for tool in tools:
             tools_info.append({
                 "name": tool.name,
                 "description": tool.description,
                 "category": tool.category.value if hasattr(tool.category, 'value') else str(tool.category)
             })
-        
+
         return ToolListResponse(
             agent_role=agent_role,
             tools=tools_info,
             total_count=len(tools_info)
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -175,10 +175,10 @@ async def execute_agent(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid agent role: {agent_role}"
             )
-        
+
         # Generate execution ID
         execution_id = str(uuid.uuid4())
-        
+
         # Create execution record
         execution_record = {
             "execution_id": execution_id,
@@ -194,9 +194,9 @@ async def execute_agent(
             "result": None,
             "error": None
         }
-        
+
         _execution_storage[execution_id] = execution_record
-        
+
         # Start background execution
         background_tasks.add_task(
             _execute_agent_background,
@@ -207,7 +207,7 @@ async def execute_agent(
             current_user.id,
             request.workflow_id
         )
-        
+
         return AgentExecutionResponse(
             execution_id=execution_id,
             agent_role=agent_role,
@@ -215,7 +215,7 @@ async def execute_agent(
             created_at=execution_record["created_at"],
             workflow_id=request.workflow_id
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -238,16 +238,16 @@ async def get_execution_status(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Execution not found"
             )
-        
+
         execution = _execution_storage[execution_id]
-        
+
         # Check if user has access to this execution
         if execution["user_id"] != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to this execution"
             )
-        
+
         return AgentStatusResponse(
             execution_id=execution_id,
             status=execution["status"],
@@ -256,7 +256,7 @@ async def get_execution_status(
             error=execution["error"],
             updated_at=execution["updated_at"]
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -281,10 +281,10 @@ async def create_workflow(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid agent role: {agent_role}"
                 )
-        
+
         # Generate workflow ID
         workflow_id = str(uuid.uuid4())
-        
+
         # Create workflow record
         workflow_record = {
             "workflow_id": workflow_id,
@@ -300,9 +300,9 @@ async def create_workflow(
             "executions": [],
             "result": None
         }
-        
+
         _workflow_storage[workflow_id] = workflow_record
-        
+
         # Store workflow state in memory manager
         memory_manager = get_memory_manager()
         await memory_manager.set_workflow_state(workflow_id, {
@@ -312,7 +312,7 @@ async def create_workflow(
             "progress": 0.0,
             "input_data": request.input_data
         })
-        
+
         return WorkflowResponse(
             workflow_id=workflow_id,
             status="created",
@@ -320,7 +320,7 @@ async def create_workflow(
             created_at=workflow_record["created_at"],
             progress=0.0
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -343,16 +343,16 @@ async def get_workflow_status(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Workflow not found"
             )
-        
+
         workflow = _workflow_storage[workflow_id]
-        
+
         # Check if user has access to this workflow
         if workflow["user_id"] != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to this workflow"
             )
-        
+
         return WorkflowResponse(
             workflow_id=workflow_id,
             status=workflow["status"],
@@ -360,7 +360,7 @@ async def get_workflow_status(
             created_at=workflow["created_at"],
             progress=workflow["progress"]
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -442,16 +442,16 @@ async def _execute_agent_background(
         _execution_storage[execution_id]["status"] = "running"
         _execution_storage[execution_id]["progress"] = 10.0
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
-        
+
         # Get orchestrator and create agent
         orchestrator = get_agent_orchestrator()
         agent_role_enum = AgentRole(agent_role)
         agent = orchestrator.create_agent(agent_role_enum)
-        
+
         # Update progress
         _execution_storage[execution_id]["progress"] = 30.0
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
-        
+
         # Execute the task (simplified for now)
         # In a full implementation, this would use the agent's tools and capabilities
         result = {
@@ -463,36 +463,36 @@ async def _execute_agent_background(
             "status": "completed",
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
         # Update progress
         _execution_storage[execution_id]["progress"] = 90.0
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
-        
+
         # Simulate some processing time
         await asyncio.sleep(1)
-        
+
         # Complete execution
         _execution_storage[execution_id]["status"] = "completed"
         _execution_storage[execution_id]["progress"] = 100.0
         _execution_storage[execution_id]["result"] = result
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
-        
+
         # Update workflow if applicable
         if workflow_id and workflow_id in _workflow_storage:
             workflow = _workflow_storage[workflow_id]
             workflow["executions"].append(execution_id)
             workflow["updated_at"] = datetime.utcnow()
-            
+
             # Update workflow progress
             total_agents = len(workflow["agents"])
             completed_executions = len(workflow["executions"])
             workflow["progress"] = (completed_executions / total_agents) * 100
-            
+
             if completed_executions >= total_agents:
                 workflow["status"] = "completed"
-        
+
         logger.info(f"Agent execution completed: {execution_id}")
-        
+
     except Exception as e:
         logger.error(f"Agent execution failed: {execution_id}, error: {e}")
         _execution_storage[execution_id]["status"] = "failed"

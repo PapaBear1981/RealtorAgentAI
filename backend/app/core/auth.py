@@ -5,7 +5,7 @@ This module provides JWT token generation/validation, password hashing,
 and authentication utilities following FastAPI best practices.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -60,11 +60,11 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
 
     encoded_jwt = jwt.encode(
         to_encode,
@@ -86,11 +86,11 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
         str: Encoded JWT refresh token
     """
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode.update({
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(timezone.utc),
         "type": "refresh"
     })
 
@@ -135,7 +135,8 @@ def verify_token(token: str) -> Dict[str, Any]:
             raise credentials_exception
 
         # Add a buffer for clock skew and testing
-        current_time = datetime.utcnow().timestamp()
+        current_time = datetime.now(timezone.utc).timestamp()
+
         if current_time > (exp + 30):  # 30 second buffer for testing
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -237,21 +238,6 @@ def validate_refresh_token(refresh_token: str) -> Dict[str, Any]:
         )
 
 
-def get_current_user():
-    """Get current user from JWT token (placeholder implementation)."""
-    # This is a placeholder implementation
-    # In a real application, you would decode and validate the JWT token
-    from ..models.user import User
-
-    user = User()
-    user.id = "test_user_123"
-    user.email = "test@example.com"
-    user.full_name = "Test User"
-    user.is_active = True
-    user.role = "basic_user"
-    return user
-
-
 async def get_current_user_ws(token: str):
     """Get current user from WebSocket token."""
     # This is a placeholder implementation for WebSocket authentication
@@ -265,8 +251,8 @@ async def get_current_user_ws(token: str):
     user = User()
     user.id = token  # Simplified - use token as user ID
     user.email = f"{token}@example.com"
-    user.full_name = f"User {token}"
-    user.is_active = True
+    user.name = f"User {token}"
+    user.disabled = False
     user.role = "basic_user"
     return user
 
@@ -281,6 +267,5 @@ __all__ = [
     "get_token_subject",
     "create_token_response",
     "validate_refresh_token",
-    "get_current_user",
     "get_current_user_ws",
 ]

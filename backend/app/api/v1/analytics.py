@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from ...core.auth import get_current_user
+from ...core.dependencies import get_current_user
 from ...models.user import User
 from ...models.analytics import (
     AgentType, ExecutionStatus, MetricType, CostCategory, EventType, ReportType,
@@ -306,6 +306,52 @@ async def get_agent_performance_metrics(
 
 
 # Dashboard Endpoints
+
+@router.get("/dashboard/overview", response_model=Dict[str, Any])
+async def get_dashboard_overview(
+    period_hours: int = Query(24, ge=1, le=8760, description="Time period in hours"),
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Get dashboard overview metrics.
+
+    Args:
+        period_hours: Time period in hours
+        current_user: Current authenticated user
+
+    Returns:
+        Dashboard overview data
+
+    Raises:
+        HTTPException: If dashboard generation fails
+    """
+    try:
+        # For now, return mock data since the services aren't fully implemented
+        # TODO: Replace with actual service calls when analytics services are ready
+
+        dashboard_data = {
+            "totalAgentExecutions": 0,
+            "successRate": 0.0,
+            "averageProcessingTime": 0.0,
+            "totalCost": 0.0,
+            "activeUsers": 1,  # Current user
+            "contractsProcessed": 0,
+            "dealsInProgress": 0,
+            "pendingSignatures": 0,
+            "complianceAlerts": 0,
+            "recentUploads": 0,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+        return dashboard_data
+
+    except Exception as e:
+        logger.error(f"Failed to get dashboard overview: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get dashboard overview: {str(e)}"
+        )
+
 
 @router.get("/dashboard/agent-performance", response_model=Dict[str, Any])
 async def get_agent_performance_dashboard(
