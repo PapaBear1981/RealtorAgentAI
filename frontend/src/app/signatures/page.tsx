@@ -169,15 +169,15 @@ export default function SignaturesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
 
         {/* Page Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-card shadow-sm border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-3xl font-bold text-gray-900">Signature Tracker</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">Signature Tracker</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Track multi-party signatures with audit trails and notifications
               </p>
             </div>
@@ -201,8 +201,8 @@ export default function SignaturesPage() {
                       {signatureRequests.map((request) => (
                         <div
                           key={request.id}
-                          className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
-                            selectedRequest?.id === request.id ? 'ring-2 ring-blue-500' : ''
+                          className={`border border-border rounded-lg p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                            selectedRequest?.id === request.id ? 'ring-2 ring-primary' : ''
                           }`}
                           onClick={() => setSelectedRequest(request)}
                         >
@@ -365,7 +365,7 @@ export default function SignaturesPage() {
                 ) : (
                   <Card>
                     <CardContent className="flex items-center justify-center h-64">
-                      <p className="text-gray-500">Select a signature request to view details</p>
+                      <p className="text-muted-foreground">Select a signature request to view details</p>
                     </CardContent>
                   </Card>
                 )}

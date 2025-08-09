@@ -290,15 +290,15 @@ export default function DocumentsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
 
         {/* Page Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-card shadow-sm border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-3xl font-bold text-gray-900">Document Intake</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">Document Intake</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Upload and process real estate documents with AI-powered extraction
               </p>
             </div>
@@ -311,8 +311,8 @@ export default function DocumentsPage() {
             {isLoading && (
               <Card className="mb-8">
                 <CardContent className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading existing documents...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading existing documents...</p>
                 </CardContent>
               </Card>
             )}
@@ -331,23 +331,23 @@ export default function DocumentsPage() {
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
                     isDragActive
-                      ? 'border-blue-400 bg-blue-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <input {...getInputProps()} />
                   <div className="space-y-4">
-                    <div className="mx-auto w-12 h-12 text-gray-400">
+                    <div className="mx-auto w-12 h-12 text-muted-foreground">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                     </div>
                     {isDragActive ? (
-                      <p className="text-blue-600">Drop the files here...</p>
+                      <p className="text-primary">Drop the files here...</p>
                     ) : (
                       <div>
-                        <p className="text-gray-600">Drag and drop files here, or click to select</p>
-                        <p className="text-sm text-gray-500 mt-1">PDF, DOC, DOCX, Images, TXT up to 10MB</p>
+                        <p className="text-foreground">Drag and drop files here, or click to select</p>
+                        <p className="text-sm text-muted-foreground mt-1">PDF, DOC, DOCX, Images, TXT up to 10MB</p>
                       </div>
                     )}
                   </div>
@@ -380,18 +380,18 @@ export default function DocumentsPage() {
                                     className="w-12 h-12 object-cover rounded"
                                   />
                                 ) : (
-                                  <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                   </div>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                                <p className="text-sm font-medium text-foreground truncate">
                                   {uploadedFile.file.name}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-muted-foreground">
                                   {documentService.formatFileSize(uploadedFile.file.size)}
                                 </p>
                               </div>
@@ -414,7 +414,7 @@ export default function DocumentsPage() {
                             {/* Progress Bar */}
                             {(uploadedFile.status === 'uploading' || uploadedFile.status === 'processing') && (
                               <div className="mt-3">
-                                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                <div className="flex justify-between text-sm text-muted-foreground mb-1">
                                   <span>
                                     {uploadedFile.status === 'uploading' ? 'Uploading...' : 'Processing...'}
                                   </span>
@@ -426,24 +426,24 @@ export default function DocumentsPage() {
 
                             {/* Extracted Data */}
                             {uploadedFile.status === 'completed' && uploadedFile.extractedData && (
-                              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-900 mb-2">Extracted Information</h4>
+                              <div className="mt-4 p-3 bg-muted rounded-lg">
+                                <h4 className="text-sm font-medium text-foreground mb-2">Extracted Information</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                   <div>
-                                    <span className="font-medium text-gray-700">Title:</span>
-                                    <p className="text-gray-600">{uploadedFile.extractedData.title}</p>
+                                    <span className="font-medium text-foreground">Title:</span>
+                                    <p className="text-muted-foreground">{uploadedFile.extractedData.title}</p>
                                   </div>
                                   <div>
-                                    <span className="font-medium text-gray-700">Property:</span>
-                                    <p className="text-gray-600">{uploadedFile.extractedData.propertyAddress}</p>
+                                    <span className="font-medium text-foreground">Property:</span>
+                                    <p className="text-muted-foreground">{uploadedFile.extractedData.propertyAddress}</p>
                                   </div>
                                   <div className="md:col-span-2">
-                                    <span className="font-medium text-gray-700">Parties:</span>
-                                    <p className="text-gray-600">{uploadedFile.extractedData.parties?.join(', ')}</p>
+                                    <span className="font-medium text-foreground">Parties:</span>
+                                    <p className="text-muted-foreground">{uploadedFile.extractedData.parties?.join(', ')}</p>
                                   </div>
                                   <div className="md:col-span-2">
-                                    <span className="font-medium text-gray-700">Key Terms:</span>
-                                    <ul className="text-gray-600 list-disc list-inside">
+                                    <span className="font-medium text-foreground">Key Terms:</span>
+                                    <ul className="text-muted-foreground list-disc list-inside">
                                       {uploadedFile.extractedData.keyTerms?.map((term, index) => (
                                         <li key={index}>{term}</li>
                                       ))}

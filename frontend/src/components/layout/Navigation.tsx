@@ -43,13 +43,13 @@ export function Navigation({ className }: NavigationProps) {
   }
 
   return (
-    <nav className={`bg-white shadow ${className}`}>
+    <nav className={`bg-background border-b border-border shadow-sm ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">RealtorAgentAI</h1>
+              <h1 className="text-2xl font-bold text-foreground">RealtorAgentAI</h1>
             </Link>
           </div>
 
@@ -59,7 +59,7 @@ export function Navigation({ className }: NavigationProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 {item.label}
               </Link>
@@ -68,10 +68,10 @@ export function Navigation({ className }: NavigationProps) {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-muted-foreground">
               Welcome, {user.name}
             </span>
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             {user.role}
           </span>
           <ThemeToggle />
@@ -84,12 +84,12 @@ export function Navigation({ className }: NavigationProps) {
 
       {/* Mobile Navigation */}
       <div className="md:hidden">
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-border">
           {navigationItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
+              className="text-muted-foreground hover:text-foreground block px-3 py-2 rounded-md text-base font-medium transition-colors"
             >
               {item.label}
             </Link>
