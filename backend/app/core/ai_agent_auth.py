@@ -14,7 +14,8 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import structlog
 
-from .auth import get_current_user, verify_token
+from .auth import verify_token
+from .dependencies import get_current_user
 from ..models.user import User
 from ..services.agent_orchestrator import AgentRole
 
@@ -31,15 +32,15 @@ class AgentPermission(Enum):
     EXECUTE_SIGNATURE_TRACKING = "execute_signature_tracking"
     EXECUTE_SUMMARY = "execute_summary"
     EXECUTE_HELP = "execute_help"
-    
+
     CREATE_WORKFLOW = "create_workflow"
     MANAGE_WORKFLOW = "manage_workflow"
     VIEW_WORKFLOW = "view_workflow"
-    
+
     VIEW_AGENT_TOOLS = "view_agent_tools"
     VIEW_AGENT_STATUS = "view_agent_status"
     VIEW_SYSTEM_METRICS = "view_system_metrics"
-    
+
     ADMIN_AGENTS = "admin_agents"
 
 
@@ -71,7 +72,7 @@ ROLE_PERMISSIONS = {
         AgentPermission.VIEW_SYSTEM_METRICS,
         AgentPermission.ADMIN_AGENTS,
     ],
-    
+
     UserRole.AGENT_MANAGER: [
         # Can execute all agents and manage workflows
         AgentPermission.EXECUTE_DATA_EXTRACTION,
@@ -87,7 +88,7 @@ ROLE_PERMISSIONS = {
         AgentPermission.VIEW_AGENT_STATUS,
         AgentPermission.VIEW_SYSTEM_METRICS,
     ],
-    
+
     UserRole.CONTRACT_SPECIALIST: [
         # Focused on contract-related operations
         AgentPermission.EXECUTE_DATA_EXTRACTION,
@@ -99,7 +100,7 @@ ROLE_PERMISSIONS = {
         AgentPermission.VIEW_AGENT_TOOLS,
         AgentPermission.VIEW_AGENT_STATUS,
     ],
-    
+
     UserRole.COMPLIANCE_OFFICER: [
         # Focused on compliance and signature tracking
         AgentPermission.EXECUTE_COMPLIANCE_CHECK,
@@ -110,7 +111,7 @@ ROLE_PERMISSIONS = {
         AgentPermission.VIEW_AGENT_TOOLS,
         AgentPermission.VIEW_AGENT_STATUS,
     ],
-    
+
     UserRole.BASIC_USER: [
         # Basic agent execution capabilities
         AgentPermission.EXECUTE_DATA_EXTRACTION,
@@ -120,7 +121,7 @@ ROLE_PERMISSIONS = {
         AgentPermission.VIEW_AGENT_TOOLS,
         AgentPermission.VIEW_AGENT_STATUS,
     ],
-    
+
     UserRole.READONLY_USER: [
         # View-only permissions
         AgentPermission.VIEW_WORKFLOW,
@@ -144,7 +145,7 @@ def get_user_role(user: User) -> UserRole:
     """Get user role from user object."""
     # This would typically come from the user's role field in the database
     # For now, we'll use a simple mapping based on user attributes
-    
+
     if hasattr(user, 'role'):
         role_mapping = {
             'admin': UserRole.ADMIN,
@@ -155,7 +156,7 @@ def get_user_role(user: User) -> UserRole:
             'readonly_user': UserRole.READONLY_USER,
         }
         return role_mapping.get(user.role, UserRole.BASIC_USER)
-    
+
     # Default role for users without explicit role
     return UserRole.BASIC_USER
 
@@ -182,19 +183,19 @@ def require_permission(permission: AgentPermission):
                 if isinstance(value, User):
                     current_user = value
                     break
-            
+
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Authentication required"
                 )
-            
+
             if not has_permission(current_user, permission):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Permission required: {permission.value}"
                 )
-            
+
             return await func(*args, **kwargs)
         return wrapper
     return decorator
@@ -208,25 +209,25 @@ async def verify_agent_access(
     try:
         # Convert string to AgentRole enum
         agent_role_enum = AgentRole(agent_role)
-        
+
         # Get required permission for this agent
         required_permission = AGENT_ROLE_PERMISSIONS.get(agent_role_enum)
-        
+
         if not required_permission:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid agent role: {agent_role}"
             )
-        
+
         # Check if user has permission
         if not has_permission(current_user, required_permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied to {agent_role} agent"
             )
-        
+
         return current_user
-        
+
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -250,20 +251,20 @@ async def verify_workflow_access(
         "manage": AgentPermission.MANAGE_WORKFLOW,
         "view": AgentPermission.VIEW_WORKFLOW,
     }
-    
+
     required_permission = permission_mapping.get(operation)
     if not required_permission:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid workflow operation: {operation}"
         )
-    
+
     if not has_permission(current_user, required_permission):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Access denied to workflow {operation}"
         )
-    
+
     return current_user
 
 
@@ -276,7 +277,7 @@ async def verify_admin_access(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
         )
-    
+
     return current_user
 
 
@@ -284,20 +285,20 @@ def get_user_agent_capabilities(user: User) -> Dict[str, Any]:
     """Get user's agent capabilities and permissions."""
     user_role = get_user_role(user)
     permissions = get_user_permissions(user)
-    
+
     # Determine which agents the user can execute
     executable_agents = []
     for agent_role, permission in AGENT_ROLE_PERMISSIONS.items():
         if permission in permissions:
             executable_agents.append(agent_role.value)
-    
+
     # Determine workflow capabilities
     workflow_capabilities = {
         "can_create": AgentPermission.CREATE_WORKFLOW in permissions,
         "can_manage": AgentPermission.MANAGE_WORKFLOW in permissions,
         "can_view": AgentPermission.VIEW_WORKFLOW in permissions,
     }
-    
+
     # Determine system access
     system_access = {
         "can_view_tools": AgentPermission.VIEW_AGENT_TOOLS in permissions,
@@ -305,7 +306,7 @@ def get_user_agent_capabilities(user: User) -> Dict[str, Any]:
         "can_view_metrics": AgentPermission.VIEW_SYSTEM_METRICS in permissions,
         "is_admin": AgentPermission.ADMIN_AGENTS in permissions,
     }
-    
+
     return {
         "user_role": user_role.value,
         "executable_agents": executable_agents,
@@ -318,7 +319,7 @@ def get_user_agent_capabilities(user: User) -> Dict[str, Any]:
 # Rate limiting for agent operations (simple in-memory implementation)
 class RateLimiter:
     """Simple rate limiter for agent operations."""
-    
+
     def __init__(self):
         self.user_requests = {}
         self.limits = {
@@ -329,49 +330,49 @@ class RateLimiter:
             UserRole.BASIC_USER: {"requests": 100, "window": 3600},  # 100 per hour
             UserRole.READONLY_USER: {"requests": 50, "window": 3600},  # 50 per hour
         }
-    
+
     def check_rate_limit(self, user: User) -> bool:
         """Check if user is within rate limits."""
         user_role = get_user_role(user)
         user_id = str(user.id)
         current_time = datetime.utcnow().timestamp()
-        
+
         if user_id not in self.user_requests:
             self.user_requests[user_id] = []
-        
+
         # Clean old requests outside the window
         window_size = self.limits[user_role]["window"]
         self.user_requests[user_id] = [
             req_time for req_time in self.user_requests[user_id]
             if current_time - req_time < window_size
         ]
-        
+
         # Check if under limit
         max_requests = self.limits[user_role]["requests"]
         if len(self.user_requests[user_id]) >= max_requests:
             return False
-        
+
         # Add current request
         self.user_requests[user_id].append(current_time)
         return True
-    
+
     def get_remaining_requests(self, user: User) -> int:
         """Get remaining requests for user."""
         user_role = get_user_role(user)
         user_id = str(user.id)
-        
+
         if user_id not in self.user_requests:
             return self.limits[user_role]["requests"]
-        
+
         current_time = datetime.utcnow().timestamp()
         window_size = self.limits[user_role]["window"]
-        
+
         # Count recent requests
         recent_requests = [
             req_time for req_time in self.user_requests[user_id]
             if current_time - req_time < window_size
         ]
-        
+
         max_requests = self.limits[user_role]["requests"]
         return max(0, max_requests - len(recent_requests))
 
@@ -385,13 +386,13 @@ async def check_rate_limit(current_user: User = Depends(get_current_user)) -> Us
     if not rate_limiter.check_rate_limit(current_user):
         user_role = get_user_role(current_user)
         limit_info = rate_limiter.limits[user_role]
-        
+
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Rate limit exceeded: {limit_info['requests']} requests per {limit_info['window']} seconds",
             headers={"Retry-After": str(limit_info["window"])}
         )
-    
+
     return current_user
 
 

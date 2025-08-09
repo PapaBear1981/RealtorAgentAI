@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 import structlog
 
-from ...core.auth import get_current_user
+from ...core.dependencies import get_current_user
 from ...core.ai_agent_auth import verify_agent_access, verify_admin_access
 from ...models.user import User
 from ...services.advanced_workflow_orchestrator import (
@@ -91,7 +91,7 @@ async def get_workflow_templates(
     try:
         orchestrator = await get_advanced_orchestrator()
         templates = list(orchestrator.workflow_definitions.values())
-        
+
         return {
             "templates": [
                 {
@@ -105,7 +105,7 @@ async def get_workflow_templates(
             ],
             "total_count": len(templates)
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get workflow templates: {e}")
         raise HTTPException(
@@ -122,24 +122,24 @@ async def execute_workflow(
     """Execute a multi-agent workflow."""
     try:
         orchestrator = await get_advanced_orchestrator()
-        
+
         # Create workflow execution
         execution = await orchestrator.create_workflow_execution(
             template_id=request.template_id,
             input_data=request.input_data,
             user_id=current_user.id
         )
-        
+
         # Start execution
         await orchestrator.start_workflow_execution(execution.execution_id)
-        
+
         return WorkflowExecutionResponse(
             execution_id=execution.execution_id,
             status=execution.status.value,
             progress=execution.progress,
             created_at=execution.workflow_definition.created_at
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to execute workflow: {e}")
         raise HTTPException(
@@ -157,15 +157,15 @@ async def get_workflow_status(
     try:
         orchestrator = await get_advanced_orchestrator()
         status_info = await orchestrator.get_workflow_status(execution_id)
-        
+
         if not status_info:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Workflow execution not found"
             )
-        
+
         return status_info
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -185,15 +185,15 @@ async def pause_workflow(
     try:
         orchestrator = await get_advanced_orchestrator()
         success = await orchestrator.pause_workflow_execution(execution_id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Workflow execution not found or cannot be paused"
             )
-        
+
         return {"message": "Workflow paused successfully", "execution_id": execution_id}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -214,25 +214,25 @@ async def create_shared_context(
     """Create a shared context for agent collaboration."""
     try:
         memory_manager = get_memory_manager()
-        
+
         success = await memory_manager.create_shared_context(
             context_id=request.context_id,
             context_data=request.context_data,
             access_agents=request.access_agents
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to create shared context"
             )
-        
+
         return {
             "message": "Shared context created successfully",
             "context_id": request.context_id,
             "access_agents": request.access_agents
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -251,20 +251,20 @@ async def get_shared_context(
     """Get shared context data."""
     try:
         memory_manager = get_memory_manager()
-        
+
         context_data = await memory_manager.get_shared_context(
             context_id=context_id,
             agent_id=current_user.id
         )
-        
+
         if not context_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Shared context not found or access denied"
             )
-        
+
         return context_data
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -282,11 +282,11 @@ async def get_cross_agent_insights(
     """Get insights about other agents for collaboration."""
     try:
         memory_manager = get_memory_manager()
-        
+
         insights = await memory_manager.get_cross_agent_insights(current_user.id)
-        
+
         return insights
-        
+
     except Exception as e:
         logger.error(f"Failed to get cross-agent insights: {e}")
         raise HTTPException(
@@ -305,16 +305,16 @@ async def analyze_property(
     """Analyze property value and market conditions."""
     try:
         knowledge_base = get_real_estate_knowledge_base()
-        
+
         # Convert string to enum
         property_type = PropertyType(request.property_type)
-        
+
         # Get market analysis
         market_analysis = knowledge_base.get_market_analysis(
             location=request.location,
             property_type=property_type
         )
-        
+
         # Estimate property value
         valuation = knowledge_base.estimate_property_value(
             location=request.location,
@@ -325,7 +325,7 @@ async def analyze_property(
             year_built=request.year_built,
             additional_features=request.additional_features
         )
-        
+
         return {
             "property_analysis": {
                 "location": request.location,
@@ -336,7 +336,7 @@ async def analyze_property(
             "valuation": valuation,
             "analysis_timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -358,25 +358,25 @@ async def check_compliance(
     """Check transaction compliance against legal requirements."""
     try:
         knowledge_base = get_real_estate_knowledge_base()
-        
+
         # Convert strings to enums
         jurisdiction = Jurisdiction(request.jurisdiction)
         property_type = PropertyType(request.property_type)
         transaction_type = TransactionType(request.transaction_type)
-        
+
         # Get legal requirements
         legal_requirements = knowledge_base.get_legal_requirements(
             jurisdiction=jurisdiction,
             property_type=property_type,
             transaction_type=transaction_type
         )
-        
+
         # Validate compliance
         violations = knowledge_base.validate_compliance(
             jurisdiction=jurisdiction,
             transaction_data=request.transaction_data
         )
-        
+
         return {
             "compliance_check": {
                 "jurisdiction": request.jurisdiction,
@@ -397,7 +397,7 @@ async def check_compliance(
             "compliance_status": "compliant" if not violations else "non_compliant",
             "check_timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -422,12 +422,12 @@ async def get_suggested_clauses(
     """Get suggested contract clauses for a transaction."""
     try:
         knowledge_base = get_real_estate_knowledge_base()
-        
+
         # Convert strings to enums
         property_type_enum = PropertyType(property_type)
         transaction_type_enum = TransactionType(transaction_type)
         jurisdiction_enum = Jurisdiction(jurisdiction)
-        
+
         # Get suggested clauses
         clauses = knowledge_base.get_suggested_clauses(
             property_type=property_type_enum,
@@ -435,7 +435,7 @@ async def get_suggested_clauses(
             jurisdiction=jurisdiction_enum,
             risk_factors=risk_factors
         )
-        
+
         return {
             "transaction_info": {
                 "property_type": property_type,
@@ -447,7 +447,7 @@ async def get_suggested_clauses(
             "total_clauses": len(clauses),
             "generated_at": datetime.utcnow().isoformat()
         }
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -474,14 +474,14 @@ async def get_audit_events(
     """Get audit events for compliance monitoring."""
     try:
         enterprise_service = get_enterprise_integration_service()
-        
+
         events = enterprise_service.get_audit_events(
             start_date=start_date,
             end_date=end_date,
             user_id=user_id,
             limit=limit
         )
-        
+
         return {
             "audit_events": [
                 {
@@ -501,7 +501,7 @@ async def get_audit_events(
             "total_events": len(events),
             "query_timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get audit events: {e}")
         raise HTTPException(
@@ -518,24 +518,24 @@ async def generate_compliance_report(
     """Generate compliance report for specified framework."""
     try:
         enterprise_service = get_enterprise_integration_service()
-        
+
         # Convert string to enum
         framework = ComplianceFramework(request.framework)
-        
+
         report = enterprise_service.generate_compliance_report(
             framework=framework,
             start_date=request.start_date,
             end_date=request.end_date
         )
-        
+
         if not report:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to generate compliance report"
             )
-        
+
         return report
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

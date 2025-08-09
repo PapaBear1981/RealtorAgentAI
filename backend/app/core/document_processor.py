@@ -15,8 +15,8 @@ import tempfile
 import os
 
 # Document processing imports
-import pymupdf4llm
-import fitz  # PyMuPDF
+# import pymupdf4llm  # Temporarily disabled for debugging
+# import fitz  # PyMuPDF  # Temporarily disabled for debugging
 from docx import Document as DocxDocument
 from PIL import Image
 import pytesseract
@@ -137,15 +137,16 @@ class DocumentProcessor:
 
             try:
                 # Use pymupdf4llm for advanced text extraction
-                if options.get('use_advanced_extraction', True):
+                if False:  # options.get('use_advanced_extraction', True):  # Temporarily disabled for debugging
                     # Extract text with markdown formatting
-                    markdown_text = pymupdf4llm.to_markdown(temp_path)
+                    # markdown_text = pymupdf4llm.to_markdown(temp_path)
 
                     # Also get page chunks for detailed analysis
-                    page_chunks = pymupdf4llm.to_markdown(temp_path, page_chunks=True)
+                    # page_chunks = pymupdf4llm.to_markdown(temp_path, page_chunks=True)
 
-                    extracted_text = markdown_text
-                    pages_data = page_chunks
+                    # extracted_text = markdown_text
+                    # pages_data = page_chunks
+                    pass
                 else:
                     # Use basic PyMuPDF extraction
                     doc = fitz.open(temp_path)

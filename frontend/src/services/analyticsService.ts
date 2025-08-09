@@ -1,6 +1,6 @@
 /**
  * Analytics service for dashboard metrics and reporting.
- * 
+ *
  * This service handles all analytics-related API calls including:
  * - Dashboard metrics and KPIs
  * - Agent performance analytics
@@ -45,7 +45,7 @@ export interface ContractMetrics {
 export interface CostMetrics {
   totalCost: number
   costByCategory: Array<{ name: string; value: number; percentage: number }>
-  costByService: Array<{ 
+  costByService: Array<{
     service: string
     cost: number
     usage: string
@@ -109,7 +109,7 @@ class AnalyticsService {
    * Get dashboard overview metrics
    */
   async getDashboardOverview(periodHours: number = 24): Promise<DashboardOverview> {
-    const response = await apiClient.get<DashboardOverview>(`/analytics/dashboard/overview?period_hours=${periodHours}`)
+    const response = await apiClient.get<DashboardOverview>(`/api/v1/analytics/dashboard/overview?period_hours=${periodHours}`)
     return response.data
   }
 
@@ -117,8 +117,8 @@ class AnalyticsService {
    * Get agent performance metrics
    */
   async getAgentPerformanceMetrics(periodHours: number = 24): Promise<AgentMetrics[]> {
-    const response = await apiClient.get<{ agent_metrics: Record<string, any> }>(`/analytics/dashboard/agent-performance?period_hours=${periodHours}`)
-    
+    const response = await apiClient.get<{ agent_metrics: Record<string, any> }>(`/api/v1/analytics/dashboard/agent-performance?period_hours=${periodHours}`)
+
     // Transform backend response to frontend format
     const agentMetrics: AgentMetrics[] = Object.entries(response.data.agent_metrics).map(([agentType, metrics]: [string, any]) => ({
       agentType: agentType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -136,8 +136,8 @@ class AnalyticsService {
    * Get contract processing metrics
    */
   async getContractMetrics(periodHours: number = 24): Promise<ContractMetrics> {
-    const response = await apiClient.get<any>(`/analytics/dashboard/contract-processing?period_hours=${periodHours}`)
-    
+    const response = await apiClient.get<any>(`/api/v1/analytics/dashboard/contract-processing?period_hours=${periodHours}`)
+
     return {
       totalContracts: response.data.total_contracts || 0,
       contractsByStatus: response.data.contracts_by_status || {},
@@ -151,8 +151,8 @@ class AnalyticsService {
    * Get cost analysis metrics
    */
   async getCostMetrics(periodHours: number = 24): Promise<CostMetrics> {
-    const response = await apiClient.get<any>(`/analytics/dashboard/cost-analysis?period_hours=${periodHours}`)
-    
+    const response = await apiClient.get<any>(`/api/v1/analytics/dashboard/cost-analysis?period_hours=${periodHours}`)
+
     return {
       totalCost: response.data.total_cost || 0,
       costByCategory: response.data.cost_by_category || [],
@@ -165,8 +165,8 @@ class AnalyticsService {
    * Get user behavior metrics
    */
   async getUserBehaviorMetrics(periodHours: number = 24): Promise<UserBehaviorMetrics> {
-    const response = await apiClient.get<any>(`/analytics/dashboard/user-behavior?period_hours=${periodHours}`)
-    
+    const response = await apiClient.get<any>(`/api/v1/analytics/dashboard/user-behavior?period_hours=${periodHours}`)
+
     return {
       activeUsers: response.data.active_users || 0,
       userActivityTrends: response.data.activity_trends || [],
@@ -179,8 +179,8 @@ class AnalyticsService {
    * Get predictive analytics metrics
    */
   async getPredictiveMetrics(): Promise<PredictiveMetrics> {
-    const response = await apiClient.get<any>('/analytics/dashboard/predictive-analytics')
-    
+    const response = await apiClient.get<any>('/api/v1/analytics/dashboard/predictive-analytics')
+
     return {
       modelPerformance: response.data.model_performance || [],
       predictions: response.data.predictions || []
@@ -191,8 +191,8 @@ class AnalyticsService {
    * Get executive summary
    */
   async getExecutiveSummary(periodHours: number = 24): Promise<ExecutiveSummary> {
-    const response = await apiClient.get<any>(`/analytics/dashboard/executive-summary?period_hours=${periodHours}`)
-    
+    const response = await apiClient.get<any>(`/api/v1/analytics/dashboard/executive-summary?period_hours=${periodHours}`)
+
     return {
       kpis: response.data.kpis || [],
       alerts: response.data.alerts || []
@@ -208,7 +208,7 @@ class AnalyticsService {
     systemLoad: number
     errorRate: number
   }> {
-    const response = await apiClient.get<any>('/analytics/real-time')
+    const response = await apiClient.get<any>('/api/v1/analytics/real-time')
     return response.data
   }
 
@@ -221,7 +221,7 @@ class AnalyticsService {
     completedDeals: number
     dealsByStatus: Record<string, number>
   }> {
-    const response = await apiClient.get<any>('/analytics/deals')
+    const response = await apiClient.get<any>('/api/v1/analytics/deals')
     return response.data
   }
 
@@ -234,7 +234,7 @@ class AnalyticsService {
     processingQueue: number
     storageUsed: number
   }> {
-    const response = await apiClient.get<any>('/analytics/files')
+    const response = await apiClient.get<any>('/api/v1/analytics/files')
     return response.data
   }
 
@@ -279,11 +279,11 @@ class AnalyticsService {
    */
   calculateTrend(current: number, previous: number): { direction: 'up' | 'down' | 'stable'; percentage: string } {
     if (previous === 0) return { direction: 'stable', percentage: '0%' }
-    
+
     const change = ((current - previous) / previous) * 100
     const direction = change > 1 ? 'up' : change < -1 ? 'down' : 'stable'
     const percentage = `${change > 0 ? '+' : ''}${change.toFixed(1)}%`
-    
+
     return { direction, percentage }
   }
 }
