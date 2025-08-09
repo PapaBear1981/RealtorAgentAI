@@ -1,5 +1,8 @@
 import { useAssistantAgentStore } from '@/stores/helpAgentStore'
 import { generateUniqueId } from '@/utils/idGenerator'
+import { apiClient } from './apiClient'
+import { contractService } from './contractService'
+import { documentService } from './documentService'
 
 export interface ActionRequest {
   type: 'contract_fill' | 'document_extract' | 'signature_send' | 'review_request' | 'file_search'
@@ -88,50 +91,98 @@ class AssistantAgentService {
   }
 
   private async fillContract(request: ActionRequest, actionId: string): Promise<ActionResult> {
-    const { contractType, sourceFiles, dealName } = request.parameters
+    const { contractType, sourceFiles, dealName, templateId, dealId } = request.parameters
 
-    // Simulate progressive contract filling
-    const steps = [
-      { progress: 20, message: 'Analyzing source documents...' },
-      { progress: 40, message: 'Extracting buyer information...' },
-      { progress: 60, message: 'Extracting property details...' },
-      { progress: 80, message: 'Filling contract fields...' },
-      { progress: 95, message: 'Validating contract completion...' }
-    ]
-
-    for (const step of steps) {
-      await this.delay(1000) // Simulate processing time
-      this.store.getState().updateAction(actionId, {
-        progress: step.progress
-      })
-
-      // Add progress message
+    try {
+      // Step 1: Analyze source documents
+      this.store.getState().updateAction(actionId, { progress: 20 })
       this.store.getState().addMessage({
         type: 'system',
-        content: `🔄 ${step.message}`,
+        content: '🔄 Analyzing source documents...',
         actionType: 'contract_fill',
         actionStatus: 'in_progress'
       })
-    }
 
-    // Simulate extracted data
-    const contractData = {
-      buyerName: 'John Smith',
-      sellerName: 'Jane Doe',
-      propertyAddress: '123 Main Street, Anytown, ST 12345',
-      purchasePrice: '$365,000',
-      earnestMoney: '$5,000',
-      closingDate: '2024-03-15',
-      financingType: 'Conventional'
-    }
+      // Get document processing results for source files
+      const documentData: Record<string, any> = {}
+      if (sourceFiles && sourceFiles.length > 0) {
+        for (const fileId of sourceFiles) {
+          try {
+            const processingResult = await documentService.getProcessingResult(fileId)
+            if (processingResult) {
+              Object.assign(documentData, processingResult.extracted_data)
+            }
+          } catch (error) {
+            console.warn(`Failed to get processing result for file ${fileId}:`, error)
+          }
+        }
+      }
 
-    return {
-      success: true,
-      data: {
-        contractType,
-        filledFields: contractData,
-        sourceFiles,
-        contractId: generateUniqueId('contract')
+      // Step 2: Call AI agent for contract filling
+      this.store.getState().updateAction(actionId, { progress: 40 })
+      this.store.getState().addMessage({
+        type: 'system',
+        content: '🔄 AI agent extracting contract information...',
+        actionType: 'contract_fill',
+        actionStatus: 'in_progress'
+      })
+
+      const aiResponse = await apiClient.post('/ai-agents/contract-fill', {
+        contract_type: contractType,
+        source_data: documentData,
+        deal_name: dealName,
+        template_id: templateId,
+      })
+
+      // Step 3: Create or update contract
+      this.store.getState().updateAction(actionId, { progress: 70 })
+      this.store.getState().addMessage({
+        type: 'system',
+        content: '🔄 Creating contract with extracted data...',
+        actionType: 'contract_fill',
+        actionStatus: 'in_progress'
+      })
+
+      let contract
+      if (dealId && templateId) {
+        contract = await contractService.createContract({
+          deal_id: dealId,
+          template_id: templateId,
+          variables: aiResponse.data.extracted_variables,
+        })
+      }
+
+      // Step 4: Validation
+      this.store.getState().updateAction(actionId, { progress: 90 })
+      this.store.getState().addMessage({
+        type: 'system',
+        content: '🔄 Validating contract completion...',
+        actionType: 'contract_fill',
+        actionStatus: 'in_progress'
+      })
+
+      return {
+        success: true,
+        data: {
+          contractType,
+          filledFields: aiResponse.data.extracted_variables,
+          sourceFiles,
+          contractId: contract?.id || generateUniqueId('contract'),
+          confidence: aiResponse.data.confidence || 0.85,
+          aiAgentResponse: aiResponse.data,
+        }
+      }
+
+    } catch (error) {
+      console.error('Contract filling failed:', error)
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Contract filling failed',
+        data: {
+          contractType,
+          sourceFiles,
+        }
       }
     }
   }
@@ -156,29 +207,71 @@ class AssistantAgentService {
       })
     }
 
-    const extractedData = {
-      personalInfo: {
-        name: 'John Smith',
-        email: 'john.smith@email.com',
-        phone: '(555) 123-4567'
-      },
-      propertyInfo: {
-        address: '123 Main Street, Anytown, ST 12345',
-        price: '$365,000',
-        sqft: '2,400',
-        bedrooms: '4',
-        bathrooms: '3'
-      },
-      financialInfo: {
-        downPayment: '$73,000',
-        loanAmount: '$292,000',
-        creditScore: '750'
-      }
-    }
+    try {
+      const extractedData: Record<string, any> = {}
 
-    return {
-      success: true,
-      data: extractedData
+      if (sourceFiles && sourceFiles.length > 0) {
+        for (const fileId of sourceFiles) {
+          try {
+            // Get existing processing result or trigger new processing
+            let processingResult = await documentService.getProcessingResult(fileId)
+
+            if (!processingResult) {
+              // Trigger document processing
+              processingResult = await documentService.processDocument(fileId)
+            }
+
+            if (processingResult) {
+              Object.assign(extractedData, processingResult.extracted_data)
+            }
+          } catch (error) {
+            console.warn(`Failed to process document ${fileId}:`, error)
+          }
+        }
+      }
+
+      // Use AI agent for enhanced extraction
+      this.store.getState().updateAction(actionId, { progress: 60 })
+      this.store.getState().addMessage({
+        type: 'system',
+        content: '🤖 AI agent analyzing extracted data...',
+        actionType: 'document_extract',
+        actionStatus: 'in_progress'
+      })
+
+      const aiResponse = await apiClient.post('/ai-agents/document-extract', {
+        extracted_data: extractedData,
+        target_fields: targetFields,
+        source_files: sourceFiles,
+      })
+
+      const structuredData = {
+        ...extractedData,
+        ...aiResponse.data.enhanced_extraction,
+        confidence: aiResponse.data.confidence || 0.8,
+      }
+
+      return {
+        success: true,
+        data: {
+          extractedData: structuredData,
+          sourceFiles,
+          targetFields,
+          aiAgentResponse: aiResponse.data,
+        }
+      }
+
+    } catch (error) {
+      console.error('Document extraction failed:', error)
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Document extraction failed',
+        data: {
+          sourceFiles,
+          targetFields,
+        }
+      }
     }
   }
 

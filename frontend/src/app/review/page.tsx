@@ -391,7 +391,7 @@ export default function ReviewPage() {
                   </div>
                   <p className="text-sm text-gray-700">{comment.content}</p>
                   <div className="mt-1">
-                    <Button variant="link" size="xs" onClick={() => setReplyingTo(comment.id)}>
+                    <Button variant="link" size="sm" onClick={() => setReplyingTo(comment.id)}>
                       Reply
                     </Button>
                   </div>
@@ -661,7 +661,7 @@ export default function ReviewPage() {
                                   </div>
                                   <p className="text-sm text-gray-700">{comment.content}</p>
                                   <div className="mt-1">
-                                    <Button variant="link" size="xs" onClick={() => setReplyingTo(comment.id)}>
+                                    <Button variant="link" size="sm" onClick={() => setReplyingTo(comment.id)}>
                                       Reply
                                     </Button>
                                   </div>

@@ -1,9 +1,61 @@
+"use client"
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Navigation } from "@/components/layout/Navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
+import { analyticsService, DashboardOverview } from "@/services/analyticsService"
+import { useEffect, useState } from "react"
 
 export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState<DashboardOverview | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true)
+        const data = await analyticsService.getDashboardOverview(24) // Last 24 hours
+        setDashboardData(data)
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+        toast({
+          title: "Failed to load dashboard",
+          description: "Could not load dashboard metrics. Please refresh the page.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadDashboardData()
+  }, [toast])
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50">
+          <Navigation />
+          <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div className="px-4 py-6 sm:px-0">
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
@@ -46,9 +98,9 @@ export default function DashboardPage() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">12</div>
+                <div className="text-2xl font-bold">{dashboardData?.dealsInProgress || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  +2 from last month
+                  Active deals in progress
                 </p>
               </CardContent>
             </Card>
@@ -71,9 +123,9 @@ export default function DashboardPage() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">5</div>
+                <div className="text-2xl font-bold">{dashboardData?.pendingSignatures || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  3 urgent
+                  Awaiting signatures
                 </p>
               </CardContent>
             </Card>
@@ -98,9 +150,9 @@ export default function DashboardPage() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">2</div>
+                <div className="text-2xl font-bold">{dashboardData?.complianceAlerts || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  1 high priority
+                  Compliance issues
                 </p>
               </CardContent>
             </Card>
@@ -124,9 +176,9 @@ export default function DashboardPage() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8</div>
+                <div className="text-2xl font-bold">{dashboardData?.recentUploads || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Today
+                  Files uploaded today
                 </p>
               </CardContent>
             </Card>

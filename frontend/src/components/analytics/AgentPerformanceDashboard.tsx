@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { AgentMetrics, analyticsService } from "@/services/analyticsService"
 import {
     Activity,
     AlertTriangle,
@@ -28,14 +30,7 @@ import {
     YAxis
 } from "recharts"
 
-interface AgentMetrics {
-  agentType: string
-  totalExecutions: number
-  successRate: number
-  averageTime: number
-  cost: number
-  status: "healthy" | "warning" | "error"
-}
+// AgentMetrics interface is now imported from analyticsService
 
 interface ExecutionTrend {
   time: string
@@ -50,6 +45,7 @@ export function AgentPerformanceDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [metrics, setMetrics] = useState<AgentMetrics[]>([])
   const [executionTrends, setExecutionTrends] = useState<ExecutionTrend[]>([])
+  const { toast } = useToast()
 
   useEffect(() => {
     loadAgentMetrics()
@@ -58,71 +54,37 @@ export function AgentPerformanceDashboard() {
   const loadAgentMetrics = async () => {
     setIsLoading(true)
     try {
-      // TODO: Replace with actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Get period hours based on selected time range
+      const periodHours = timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 720 // 30d
 
-      // Mock data for demonstration
-      setMetrics([
-        {
-          agentType: "Data Extraction",
-          totalExecutions: 342,
-          successRate: 96.2,
-          averageTime: 1.8,
-          cost: 45.67,
-          status: "healthy"
-        },
-        {
-          agentType: "Contract Generator",
-          totalExecutions: 189,
-          successRate: 94.7,
-          averageTime: 3.2,
-          cost: 78.23,
-          status: "healthy"
-        },
-        {
-          agentType: "Compliance Checker",
-          totalExecutions: 156,
-          successRate: 89.1,
-          averageTime: 2.1,
-          cost: 34.12,
-          status: "warning"
-        },
-        {
-          agentType: "Signature Tracker",
-          totalExecutions: 298,
-          successRate: 98.3,
-          averageTime: 0.9,
-          cost: 23.45,
-          status: "healthy"
-        },
-        {
-          agentType: "Summary Agent",
-          totalExecutions: 234,
-          successRate: 92.8,
-          averageTime: 1.5,
-          cost: 56.78,
-          status: "healthy"
-        },
-        {
-          agentType: "Help Agent",
-          totalExecutions: 567,
-          successRate: 97.1,
-          averageTime: 0.7,
-          cost: 89.34,
-          status: "healthy"
-        }
-      ])
+      // Load real agent performance metrics
+      const agentMetrics = await analyticsService.getAgentPerformanceMetrics(periodHours)
+      setMetrics(agentMetrics)
 
-      setExecutionTrends([
-        { time: "00:00", successful: 45, failed: 2, total: 47 },
-        { time: "04:00", successful: 38, failed: 1, total: 39 },
-        { time: "08:00", successful: 67, failed: 3, total: 70 },
-        { time: "12:00", successful: 89, failed: 4, total: 93 },
-        { time: "16:00", successful: 76, failed: 2, total: 78 },
-        { time: "20:00", successful: 54, failed: 1, total: 55 }
-      ])
+      // Generate execution trends based on real data
+      // For now, we'll use a simplified trend generation
+      // In a real implementation, this would come from the backend
+      const trends: ExecutionTrend[] = []
+      const hours = periodHours > 24 ? 24 : periodHours
+      for (let i = 0; i < hours; i += 4) {
+        const hour = String(i).padStart(2, '0') + ':00'
+        const totalExecutions = agentMetrics.reduce((sum, metric) => sum + metric.totalExecutions, 0)
+        const avgSuccessRate = agentMetrics.reduce((sum, metric) => sum + metric.successRate, 0) / agentMetrics.length
+
+        const total = Math.floor(totalExecutions / (hours / 4))
+        const successful = Math.floor(total * (avgSuccessRate / 100))
+        const failed = total - successful
+
+        trends.push({ time: hour, successful, failed, total })
+      }
+      setExecutionTrends(trends)
     } catch (error) {
       console.error("Failed to load agent metrics:", error)
+      toast({
+        title: "Failed to load agent metrics",
+        description: "Could not load agent performance data. Please refresh the page.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }

@@ -270,7 +270,7 @@ export function CostAnalysisDashboard() {
           <div className="space-y-4">
             {costByService.map((service, index) => (
               <div
-                key={`cost-service-${service.name}-${index}`}
+                key={`cost-service-${service.service}-${index}`}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 <div className="flex items-center space-x-4">

@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { useDropzone } from "react-dropzone"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Navigation } from "@/components/layout/Navigation"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
+import { useDocumentProcessingUpdates } from "@/hooks/useWebSocket"
+import { documentService } from "@/services/documentService"
+import { useCallback, useEffect, useState } from "react"
+import { useDropzone } from "react-dropzone"
 
 interface UploadedFile {
   id: string
@@ -39,10 +41,101 @@ const DOCUMENT_TYPES = [
 
 export default function DocumentsPage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles: UploadedFile[] = acceptedFiles.map(file => ({
+  // WebSocket integration for real-time document processing updates
+  useDocumentProcessingUpdates((update) => {
+    setUploadedFiles(prev => prev.map(file => {
+      if (file.id === update.document_id) {
+        return {
+          ...file,
+          status: update.status,
+          progress: update.progress || file.progress,
+          extractedData: update.extracted_data || file.extractedData,
+        }
+      }
+      return file
+    }))
+
+    // Show toast notifications for status changes
+    if (update.status === 'completed') {
+      toast({
+        title: "Document processed",
+        description: "Document processing completed successfully.",
+      })
+    } else if (update.status === 'error') {
+      toast({
+        title: "Processing failed",
+        description: update.error_message || "Document processing failed.",
+        variant: "destructive",
+      })
+    }
+  })
+
+  // Load existing documents on component mount
+  useEffect(() => {
+    const loadExistingDocuments = async () => {
+      try {
+        const documents = await documentService.getDocuments()
+
+        const existingFiles: UploadedFile[] = documents.map(doc => ({
+          id: doc.id,
+          file: new File([], doc.original_filename, { type: doc.content_type }),
+          status: doc.status as 'uploading' | 'processing' | 'completed' | 'error',
+          progress: doc.status === 'completed' ? 100 : 0,
+          type: documentService.getFileTypeCategory(doc.content_type),
+        }))
+
+        // Load processing results for completed documents
+        for (const file of existingFiles) {
+          if (file.status === 'completed') {
+            try {
+              const processingResult = await documentService.getProcessingResult(file.id)
+              if (processingResult) {
+                file.extractedData = processingResult.extracted_data
+              }
+            } catch (error) {
+              console.warn(`Failed to load processing result for ${file.id}:`, error)
+            }
+          }
+        }
+
+        setUploadedFiles(existingFiles)
+      } catch (error) {
+        console.error('Failed to load existing documents:', error)
+        toast({
+          title: "Failed to load documents",
+          description: "Could not load existing documents. Please refresh the page.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadExistingDocuments()
+  }, [])
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    // Validate files before upload
+    const validFiles = acceptedFiles.filter(file => {
+      const validation = documentService.validateFile(file)
+      if (!validation.valid) {
+        toast({
+          title: "File validation failed",
+          description: `${file.name}: ${validation.error}`,
+          variant: "destructive",
+        })
+        return false
+      }
+      return true
+    })
+
+    if (validFiles.length === 0) return
+
+    // Create initial file entries
+    const newFiles: UploadedFile[] = validFiles.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
       preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
@@ -52,89 +145,145 @@ export default function DocumentsPage() {
 
     setUploadedFiles(prev => [...prev, ...newFiles])
 
-    // Simulate upload and processing
+    // Upload files with real API calls
     newFiles.forEach(uploadedFile => {
-      simulateFileProcessing(uploadedFile.id)
+      handleFileUpload(uploadedFile)
     })
 
     toast({
-      title: "Files uploaded",
-      description: `${acceptedFiles.length} file(s) uploaded successfully.`,
+      title: "Files uploading",
+      description: `${validFiles.length} file(s) started uploading.`,
     })
   }, [toast])
 
-  const simulateFileProcessing = (fileId: string) => {
-    // Simulate upload progress
-    let progress = 0
-    const uploadInterval = setInterval(() => {
-      progress += Math.random() * 30
-      if (progress >= 100) {
-        progress = 100
-        clearInterval(uploadInterval)
-        
-        // Move to processing
-        setUploadedFiles(prev => prev.map(file => 
-          file.id === fileId 
-            ? { ...file, status: 'processing', progress: 0 }
-            : file
-        ))
-
-        // Simulate processing
-        setTimeout(() => {
-          const mockExtractedData = {
-            title: 'Residential Purchase Agreement',
-            parties: ['John Smith (Buyer)', 'Jane Doe (Seller)'],
-            propertyAddress: '123 Main St, Anytown, ST 12345',
-            contractType: 'Purchase Agreement',
-            keyTerms: ['Purchase Price: $350,000', 'Closing Date: 30 days', 'Contingencies: Inspection, Financing']
-          }
-
-          setUploadedFiles(prev => prev.map(file => 
-            file.id === fileId 
-              ? { 
-                  ...file, 
-                  status: 'completed', 
-                  progress: 100,
-                  extractedData: mockExtractedData,
-                  type: 'purchase-agreement'
-                }
+  const handleFileUpload = async (uploadedFile: UploadedFile) => {
+    try {
+      // Upload file with progress tracking
+      const documentUpload = await documentService.uploadFile(
+        uploadedFile.file,
+        undefined, // dealId - could be passed from props or context
+        (progress) => {
+          setUploadedFiles(prev => prev.map(file =>
+            file.id === uploadedFile.id
+              ? { ...file, progress: progress.percentage }
               : file
           ))
-        }, 2000)
-      } else {
-        setUploadedFiles(prev => prev.map(file => 
-          file.id === fileId 
-            ? { ...file, progress }
+        }
+      )
+
+      // Update file status to processing
+      setUploadedFiles(prev => prev.map(file =>
+        file.id === uploadedFile.id
+          ? {
+              ...file,
+              status: 'processing',
+              progress: 0,
+              id: documentUpload.id // Use real document ID
+            }
+          : file
+      ))
+
+      // Start document processing
+      try {
+        const processingResult = await documentService.processDocument(documentUpload.id)
+
+        // Update with extracted data
+        setUploadedFiles(prev => prev.map(file =>
+          file.id === uploadedFile.id || file.id === documentUpload.id
+            ? {
+                ...file,
+                id: documentUpload.id,
+                status: 'completed',
+                progress: 100,
+                extractedData: processingResult.extracted_data,
+                type: documentService.getFileTypeCategory(documentUpload.content_type)
+              }
             : file
         ))
+
+        toast({
+          title: "Document processed",
+          description: `${uploadedFile.file.name} has been processed successfully.`,
+        })
+
+      } catch (processingError) {
+        console.error('Document processing failed:', processingError)
+
+        // Mark as completed but without extracted data
+        setUploadedFiles(prev => prev.map(file =>
+          file.id === uploadedFile.id || file.id === documentUpload.id
+            ? {
+                ...file,
+                id: documentUpload.id,
+                status: 'completed',
+                progress: 100,
+                type: documentService.getFileTypeCategory(documentUpload.content_type)
+              }
+            : file
+        ))
+
+        toast({
+          title: "Processing incomplete",
+          description: `${uploadedFile.file.name} uploaded but processing failed.`,
+          variant: "destructive",
+        })
       }
-    }, 200)
+
+    } catch (uploadError) {
+      console.error('File upload failed:', uploadError)
+
+      setUploadedFiles(prev => prev.map(file =>
+        file.id === uploadedFile.id
+          ? { ...file, status: 'error', progress: 0 }
+          : file
+      ))
+
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload ${uploadedFile.file.name}: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`,
+        variant: "destructive",
+      })
+    }
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-      'text/plain': ['.txt'],
-    },
+    accept: documentService.getSupportedFileTypes(),
     maxSize: 10 * 1024 * 1024, // 10MB
   })
 
-  const removeFile = (fileId: string) => {
-    setUploadedFiles(prev => {
-      const fileToRemove = prev.find(f => f.id === fileId)
-      if (fileToRemove?.preview) {
-        URL.revokeObjectURL(fileToRemove.preview)
+  const removeFile = async (fileId: string) => {
+    try {
+      // Only delete from backend if it's a real document (not just a local upload)
+      const fileToRemove = uploadedFiles.find(f => f.id === fileId)
+      if (fileToRemove && fileToRemove.status !== 'uploading') {
+        await documentService.deleteDocument(fileId)
       }
-      return prev.filter(f => f.id !== fileId)
-    })
+
+      setUploadedFiles(prev => {
+        const fileToRemove = prev.find(f => f.id === fileId)
+        if (fileToRemove?.preview) {
+          URL.revokeObjectURL(fileToRemove.preview)
+        }
+        return prev.filter(f => f.id !== fileId)
+      })
+
+      toast({
+        title: "File removed",
+        description: "Document has been deleted successfully.",
+      })
+    } catch (error) {
+      console.error('Failed to delete file:', error)
+      toast({
+        title: "Delete failed",
+        description: `Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      })
+    }
   }
 
   const updateFileType = (fileId: string, type: string) => {
-    setUploadedFiles(prev => prev.map(file => 
+    setUploadedFiles(prev => prev.map(file =>
       file.id === fileId ? { ...file, type } : file
     ))
   }
@@ -143,7 +292,7 @@ export default function DocumentsPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        
+
         {/* Page Header */}
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,8 +307,19 @@ export default function DocumentsPage() {
 
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
+            {/* Loading State */}
+            {isLoading && (
+              <Card className="mb-8">
+                <CardContent className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading existing documents...</p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Upload Area */}
-            <Card className="mb-8">
+            {!isLoading && (
+              <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Upload Documents</CardTitle>
                 <CardDescription>
@@ -170,8 +330,8 @@ export default function DocumentsPage() {
                 <div
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                    isDragActive 
-                      ? 'border-blue-400 bg-blue-50' 
+                    isDragActive
+                      ? 'border-blue-400 bg-blue-50'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -194,6 +354,7 @@ export default function DocumentsPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Uploaded Files */}
             {uploadedFiles.length > 0 && (
@@ -213,9 +374,9 @@ export default function DocumentsPage() {
                             <div className="flex items-center space-x-3">
                               <div className="flex-shrink-0">
                                 {uploadedFile.preview ? (
-                                  <img 
-                                    src={uploadedFile.preview} 
-                                    alt="Preview" 
+                                  <img
+                                    src={uploadedFile.preview}
+                                    alt="Preview"
                                     className="w-12 h-12 object-cover rounded"
                                   />
                                 ) : (
@@ -231,7 +392,7 @@ export default function DocumentsPage() {
                                   {uploadedFile.file.name}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                  {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
+                                  {documentService.formatFileSize(uploadedFile.file.size)}
                                 </p>
                               </div>
                               <div className="flex items-center space-x-2">

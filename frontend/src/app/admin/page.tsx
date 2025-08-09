@@ -199,8 +199,9 @@ export default function AdminPage() {
 
   const handleUserRoleSave = () => {
     if (!selectedUser || !selectedUserRole) return
-    setUsers(prev => prev.map(u => (u.id === selectedUser.id ? { ...u, role: selectedUserRole } : u)))
-    setSelectedUser({ ...selectedUser, role: selectedUserRole })
+    const validRole = selectedUserRole as 'admin' | 'agent' | 'tc' | 'signer'
+    setUsers(prev => prev.map(u => (u.id === selectedUser.id ? { ...u, role: validRole } : u)))
+    setSelectedUser({ ...selectedUser, role: validRole })
     toast({ title: "User Updated", description: "User role saved." })
   }
 

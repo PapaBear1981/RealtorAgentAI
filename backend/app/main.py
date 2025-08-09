@@ -180,9 +180,18 @@ app = FastAPI(
 )
 
 # Add middleware
+# Add specific frontend origins for development
+frontend_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001"
+]
+allowed_origins = settings.ALLOWED_HOSTS + frontend_origins if settings.ALLOWED_HOSTS != ["*"] else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_HOSTS,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

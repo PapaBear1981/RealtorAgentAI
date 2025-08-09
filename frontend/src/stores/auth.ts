@@ -1,3 +1,4 @@
+import { authService } from '@/services/authService'
 import type { AuthState, User } from '@/types'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -32,13 +33,16 @@ const cookieStorage = {
 }
 
 interface AuthStore extends AuthState {
+  refreshToken: string | null
   // Actions
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
+  setRefreshToken: (refreshToken: string | null) => void
   setLoading: (loading: boolean) => void
   checkAuth: () => Promise<void>
+  refreshAccessToken: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -47,6 +51,7 @@ export const useAuthStore = create<AuthStore>()(
       // Initial state
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -54,40 +59,37 @@ export const useAuthStore = create<AuthStore>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true })
         try {
-          // Mock authentication for demo purposes
-          // TODO: Replace with actual API call
-          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
+          const response = await authService.login(email, password)
 
-          if (email === 'admin@example.com' && password === 'password') {
-            const mockUser: User = {
-              id: '1',
-              email: 'admin@example.com',
-              name: 'Admin User',
-              role: 'admin',
-              created_at: new Date().toISOString(),
-            }
-
-            const mockToken = 'mock-jwt-token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
-
-            set({
-              user: mockUser,
-              token: mockToken,
-              isAuthenticated: true,
-              isLoading: false,
-            })
-          } else {
-            throw new Error('Invalid credentials')
-          }
+          set({
+            user: response.user,
+            token: response.access_token,
+            refreshToken: response.refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          })
         } catch (error) {
           set({ isLoading: false })
           throw error
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        const { token } = get()
+
+        // Call logout API if we have a token
+        if (token) {
+          try {
+            await authService.logout(token)
+          } catch (error) {
+            console.warn('Logout API call failed:', error)
+          }
+        }
+
         set({
           user: null,
           token: null,
+          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
         })
@@ -108,57 +110,66 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading })
       },
 
-      checkAuth: async () => {
-        const { token, user } = get()
+      setRefreshToken: (refreshToken: string | null) => {
+        set({ refreshToken })
+      },
 
-        // Debug logging
-        console.log('checkAuth called:', { token: !!token, user: !!user, tokenPrefix: token?.substring(0, 20) })
+      refreshAccessToken: async () => {
+        const { refreshToken } = get()
+
+        if (!refreshToken) {
+          throw new Error('No refresh token available')
+        }
+
+        try {
+          const response = await authService.refreshToken(refreshToken)
+
+          set({
+            user: response.user,
+            token: response.access_token,
+            refreshToken: response.refresh_token,
+            isAuthenticated: true,
+          })
+        } catch (error) {
+          // Refresh failed, clear auth state
+          set({
+            user: null,
+            token: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+          })
+          throw error
+        }
+      },
+
+      checkAuth: async () => {
+        const { token } = get()
 
         if (!token) {
-          console.log('No token found, clearing auth state')
           set({ isAuthenticated: false, user: null })
           return
         }
 
         set({ isLoading: true })
         try {
-          // For mock authentication, validate the token format and restore user
-          if (token.startsWith('mock-jwt-token-') && user) {
-            // Token is valid and we have user data, restore the session
-            console.log('Valid session found, restoring authentication')
+          const user = await authService.validateToken(token)
+
+          if (user) {
             set({
               user,
               isAuthenticated: true,
               isLoading: false,
             })
           } else {
-            // Invalid token or missing user data, clear session
-            console.log('Invalid session data, clearing auth state')
-            throw new Error('Invalid session data')
+            throw new Error('Token validation failed')
           }
-
-          // TODO: Replace with actual API call when backend is ready
-          // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
-          //   headers: {
-          //     'Authorization': `Bearer ${token}`,
-          //   },
-          // })
-          //
-          // if (!response.ok) {
-          //   throw new Error('Auth check failed')
-          // }
-          //
-          // const user = await response.json()
-          // set({
-          //   user,
-          //   isAuthenticated: true,
-          //   isLoading: false,
-          // })
         } catch (error) {
-          console.log('checkAuth error:', error)
+          console.warn('checkAuth error:', error)
           set({
             user: null,
             token: null,
+            refreshToken: null,
             isAuthenticated: false,
             isLoading: false,
           })

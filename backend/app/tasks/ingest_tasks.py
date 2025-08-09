@@ -38,7 +38,7 @@ def process_file_upload(
 ) -> Dict[str, Any]:
     """
     Process uploaded file with validation and metadata extraction.
-    
+
     Args:
         file_id: Database file record ID
         user_id: User who uploaded the file
@@ -46,7 +46,7 @@ def process_file_upload(
         original_filename: Original filename
         file_size: File size in bytes
         mime_type: MIME type of the file
-        
+
     Returns:
         Dict: Processing results with status and metadata
     """
@@ -59,27 +59,27 @@ def process_file_upload(
             size=file_size,
             mime_type=mime_type
         )
-        
+
         # Update file status to processing
         file_record = self.session.get(File, file_id)
         if not file_record:
             raise ValueError(f"File record not found: {file_id}")
-        
+
         file_record.processing_status = ProcessingStatus.PROCESSING
         file_record.processing_started_at = datetime.utcnow()
         self.session.add(file_record)
         self.session.commit()
-        
+
         # Get storage client and file content
         storage_client = get_storage_client()
         file_content = storage_client.download_file(storage_key)
-        
+
         # Validate file integrity
         file_hash = hashlib.sha256(file_content).hexdigest()
-        
+
         # Virus scan (placeholder - would integrate with actual antivirus)
         virus_scan_result = virus_scan_file.delay(file_content, original_filename)
-        
+
         # Extract basic metadata
         metadata = {
             "original_filename": original_filename,
@@ -89,24 +89,24 @@ def process_file_upload(
             "upload_timestamp": datetime.utcnow().isoformat(),
             "processing_task_id": self.request.id
         }
-        
+
         # Validate document format and structure
         validation_result = validate_document.delay(
             file_content, original_filename, mime_type
         )
-        
+
         # Extract detailed metadata based on file type
         metadata_result = extract_metadata.delay(
             file_content, original_filename, mime_type
         )
-        
+
         # Update file record with initial results
         file_record.file_hash = file_hash
         file_record.metadata = metadata
         file_record.processing_status = ProcessingStatus.COMPLETED
         file_record.processing_completed_at = datetime.utcnow()
         self.session.add(file_record)
-        
+
         # Create audit log
         audit_log = AuditLog(
             user_id=user_id,
@@ -127,14 +127,14 @@ def process_file_upload(
         )
         self.session.add(audit_log)
         self.session.commit()
-        
+
         logger.info(
             "File upload processing completed",
             file_id=file_id,
             file_hash=file_hash,
             processing_duration=audit_log.meta["processing_duration"]
         )
-        
+
         return {
             "status": "completed",
             "file_id": file_id,
@@ -144,7 +144,7 @@ def process_file_upload(
             "validation_task_id": validation_result.id,
             "metadata_task_id": metadata_result.id
         }
-        
+
     except Exception as exc:
         logger.error(
             "File upload processing failed",
@@ -152,7 +152,7 @@ def process_file_upload(
             error=str(exc),
             exc_info=True
         )
-        
+
         # Update file record with error status
         if 'file_record' in locals():
             file_record.processing_status = ProcessingStatus.FAILED
@@ -160,7 +160,7 @@ def process_file_upload(
             file_record.processing_completed_at = datetime.utcnow()
             self.session.add(file_record)
             self.session.commit()
-        
+
         # Create error audit log
         audit_log = AuditLog(
             user_id=user_id,
@@ -174,7 +174,7 @@ def process_file_upload(
         )
         self.session.add(audit_log)
         self.session.commit()
-        
+
         # Retry with exponential backoff
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
@@ -183,18 +183,18 @@ def process_file_upload(
 def validate_document(self, file_content: bytes, filename: str, mime_type: str) -> Dict[str, Any]:
     """
     Validate document format and structure.
-    
+
     Args:
         file_content: File content bytes
         filename: Original filename
         mime_type: MIME type
-        
+
     Returns:
         Dict: Validation results
     """
     try:
         logger.info("Starting document validation", filename=filename, mime_type=mime_type)
-        
+
         validation_results = {
             "is_valid": True,
             "format_valid": True,
@@ -202,19 +202,19 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
             "errors": [],
             "warnings": []
         }
-        
+
         # Validate MIME type matches file extension
         expected_mime = mimetypes.guess_type(filename)[0]
         if expected_mime and expected_mime != mime_type:
             validation_results["warnings"].append(
                 f"MIME type mismatch: expected {expected_mime}, got {mime_type}"
             )
-        
+
         # Validate file is not corrupted
         if len(file_content) == 0:
             validation_results["is_valid"] = False
             validation_results["errors"].append("File is empty")
-        
+
         # Format-specific validation
         if mime_type == "application/pdf":
             validation_results.update(self._validate_pdf(file_content))
@@ -222,7 +222,7 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
             validation_results.update(self._validate_docx(file_content))
         elif mime_type.startswith("image/"):
             validation_results.update(self._validate_image(file_content))
-        
+
         logger.info(
             "Document validation completed",
             filename=filename,
@@ -230,9 +230,9 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
             errors=len(validation_results["errors"]),
             warnings=len(validation_results["warnings"])
         )
-        
+
         return validation_results
-        
+
     except Exception as exc:
         logger.error("Document validation failed", filename=filename, error=str(exc))
         return {
@@ -248,7 +248,7 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
         try:
             import fitz  # PyMuPDF
             doc = fitz.open(stream=file_content, filetype="pdf")
-            
+
             results = {
                 "format_valid": True,
                 "structure_valid": True,
@@ -256,7 +256,7 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
                 "has_text": False,
                 "has_images": False
             }
-            
+
             # Check if PDF has extractable text
             for page in doc:
                 if page.get_text().strip():
@@ -265,10 +265,10 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
                     results["has_images"] = True
                 if results["has_text"] and results["has_images"]:
                     break
-            
+
             doc.close()
             return results
-            
+
         except Exception as e:
             return {
                 "format_valid": False,
@@ -281,9 +281,9 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
         try:
             from docx import Document
             from io import BytesIO
-            
+
             doc = Document(BytesIO(file_content))
-            
+
             return {
                 "format_valid": True,
                 "structure_valid": True,
@@ -291,7 +291,7 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
                 "table_count": len(doc.tables),
                 "has_text": any(p.text.strip() for p in doc.paragraphs)
             }
-            
+
         except Exception as e:
             return {
                 "format_valid": False,
@@ -304,9 +304,9 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
         try:
             from PIL import Image
             from io import BytesIO
-            
+
             img = Image.open(BytesIO(file_content))
-            
+
             return {
                 "format_valid": True,
                 "structure_valid": True,
@@ -315,7 +315,7 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
                 "format": img.format,
                 "mode": img.mode
             }
-            
+
         except Exception as e:
             return {
                 "format_valid": False,
@@ -328,38 +328,37 @@ def validate_document(self, file_content: bytes, filename: str, mime_type: str) 
 def extract_metadata(self, file_content: bytes, filename: str, mime_type: str) -> Dict[str, Any]:
     """
     Extract detailed metadata from uploaded file.
-    
+
     Args:
         file_content: File content bytes
         filename: Original filename
         mime_type: MIME type
-        
+
     Returns:
         Dict: Extracted metadata
     """
     try:
         logger.info("Starting metadata extraction", filename=filename, mime_type=mime_type)
-        
+
         metadata = {
             "filename": filename,
             "mime_type": mime_type,
             "size": len(file_content),
             "extraction_timestamp": datetime.utcnow().isoformat()
         }
-        
+
         # Use document processor for advanced metadata extraction
         doc_processor = get_document_processor()
-        
+
         if mime_type in doc_processor.supported_formats:
-            processing_result = await doc_processor.process_document(
-                file_content, filename, mime_type.split('/')[-1]
-            )
-            metadata.update(processing_result.get("metadata", {}))
-        
+            # Note: This would need to be async in a real implementation
+            # For now, we'll skip the advanced processing
+            logger.info("Advanced document processing skipped (requires async)", filename=filename)
+
         logger.info("Metadata extraction completed", filename=filename, metadata_keys=list(metadata.keys()))
-        
+
         return metadata
-        
+
     except Exception as exc:
         logger.error("Metadata extraction failed", filename=filename, error=str(exc))
         return {
@@ -375,17 +374,17 @@ def extract_metadata(self, file_content: bytes, filename: str, mime_type: str) -
 def virus_scan_file(self, file_content: bytes, filename: str) -> Dict[str, Any]:
     """
     Perform virus scan on uploaded file.
-    
+
     Args:
         file_content: File content bytes
         filename: Original filename
-        
+
     Returns:
         Dict: Virus scan results
     """
     try:
         logger.info("Starting virus scan", filename=filename, size=len(file_content))
-        
+
         # Placeholder for actual virus scanning integration
         # In production, this would integrate with ClamAV, VirusTotal, or similar
         scan_results = {
@@ -395,7 +394,7 @@ def virus_scan_file(self, file_content: bytes, filename: str) -> Dict[str, Any]:
             "scan_timestamp": datetime.utcnow().isoformat(),
             "scan_duration": 0.1  # Placeholder duration
         }
-        
+
         # Basic checks for suspicious content
         suspicious_patterns = [
             b"<script",
@@ -404,21 +403,21 @@ def virus_scan_file(self, file_content: bytes, filename: str) -> Dict[str, Any]:
             b"onload=",
             b"onerror="
         ]
-        
+
         for pattern in suspicious_patterns:
             if pattern in file_content.lower():
                 scan_results["is_clean"] = False
                 scan_results["threats_found"].append(f"Suspicious pattern: {pattern.decode()}")
-        
+
         logger.info(
             "Virus scan completed",
             filename=filename,
             is_clean=scan_results["is_clean"],
             threats=len(scan_results["threats_found"])
         )
-        
+
         return scan_results
-        
+
     except Exception as exc:
         logger.error("Virus scan failed", filename=filename, error=str(exc))
         return {

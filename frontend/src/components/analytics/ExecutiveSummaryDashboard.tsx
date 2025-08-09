@@ -1,38 +1,33 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer
-} from "recharts"
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
-  DollarSign, 
-  Users, 
-  FileText, 
-  Activity,
-  Target,
-  Award,
-  Clock,
-  Zap
+import { useToast } from "@/hooks/use-toast"
+import { analyticsService } from "@/services/analyticsService"
+import {
+    Activity,
+    AlertTriangle,
+    CheckCircle,
+    DollarSign,
+    FileText,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Users
 } from "lucide-react"
+import { useEffect, useState } from "react"
+import {
+    CartesianGrid,
+    Legend,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis
+} from "recharts"
 
 interface KPI {
   name: string
@@ -57,6 +52,7 @@ export function ExecutiveSummaryDashboard() {
   const [kpis, setKpis] = useState<KPI[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [performanceTrends, setPerformanceTrends] = useState<any[]>([])
+  const { toast } = useToast()
 
   useEffect(() => {
     loadExecutiveSummary()
@@ -65,98 +61,20 @@ export function ExecutiveSummaryDashboard() {
   const loadExecutiveSummary = async () => {
     setIsLoading(true)
     try {
-      // TODO: Replace with actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Mock data for demonstration
-      setKpis([
-        {
-          name: "Monthly Revenue",
-          value: "$124,567",
-          target: "$150,000",
-          progress: 83,
-          trend: "up",
-          trendValue: "+12.5%",
-          status: "on-track"
-        },
-        {
-          name: "Contract Processing",
-          value: "1,247",
-          target: "1,500",
-          progress: 83,
-          trend: "up",
-          trendValue: "+8.3%",
-          status: "on-track"
-        },
-        {
-          name: "Customer Satisfaction",
-          value: "94.2%",
-          target: "95%",
-          progress: 99,
-          trend: "up",
-          trendValue: "+2.1%",
-          status: "on-track"
-        },
-        {
-          name: "System Uptime",
-          value: "99.8%",
-          target: "99.9%",
-          progress: 99,
-          trend: "stable",
-          trendValue: "0%",
-          status: "at-risk"
-        },
-        {
-          name: "Cost Efficiency",
-          value: "$0.23",
-          target: "$0.20",
-          progress: 87,
-          trend: "down",
-          trendValue: "-5.2%",
-          status: "behind"
-        },
-        {
-          name: "User Adoption",
-          value: "78%",
-          target: "85%",
-          progress: 92,
-          trend: "up",
-          trendValue: "+15.3%",
-          status: "on-track"
-        }
-      ])
+      // Load real executive summary data
+      const executiveSummary = await analyticsService.getExecutiveSummary(24)
 
-      setAlerts([
-        {
-          id: "1",
-          type: "warning",
-          title: "High API Costs",
-          description: "OpenAI API costs are 15% above budget this month",
-          timestamp: "2 hours ago"
-        },
-        {
-          id: "2",
-          type: "info",
-          title: "New Feature Deployment",
-          description: "Predictive analytics module deployed successfully",
-          timestamp: "4 hours ago"
-        },
-        {
-          id: "3",
-          type: "error",
-          title: "Agent Performance Issue",
-          description: "Compliance checker agent showing increased error rate",
-          timestamp: "6 hours ago"
-        }
-      ])
+      setKpis(executiveSummary.kpis)
+      setAlerts(executiveSummary.alerts)
 
-      setPerformanceTrends([
-        { month: "Jan", revenue: 98000, contracts: 890, satisfaction: 92.1 },
-        { month: "Feb", revenue: 105000, contracts: 945, satisfaction: 93.2 },
-        { month: "Mar", revenue: 112000, contracts: 1020, satisfaction: 93.8 },
-        { month: "Apr", revenue: 118000, contracts: 1150, satisfaction: 94.1 },
-        { month: "May", revenue: 124567, contracts: 1247, satisfaction: 94.2 }
-      ])
+      // Generate performance trends from KPI data
+      const trends = executiveSummary.kpis.map((kpi, index) => ({
+        month: new Date().toLocaleDateString('en-US', { month: 'short' }),
+        revenue: kpi.name === 'Monthly Revenue' ? parseFloat(kpi.value.replace(/[$,]/g, '')) : 0,
+        contracts: kpi.name === 'Contract Processing' ? parseInt(kpi.value.replace(/,/g, '')) : 0,
+        satisfaction: kpi.name === 'Customer Satisfaction' ? parseFloat(kpi.value.replace('%', '')) : 0,
+      }))
+      setPerformanceTrends(trends)
     } catch (error) {
       console.error("Failed to load executive summary:", error)
     } finally {
@@ -242,7 +160,7 @@ export function ExecutiveSummaryDashboard() {
                 <div className="flex items-center space-x-1">
                   {getTrendIcon(kpi.trend)}
                   <span className={`text-sm font-medium ${
-                    kpi.trend === "up" ? "text-green-600" : 
+                    kpi.trend === "up" ? "text-green-600" :
                     kpi.trend === "down" ? "text-red-600" : "text-gray-600"
                   }`}>
                     {kpi.trendValue}
@@ -282,27 +200,27 @@ export function ExecutiveSummaryDashboard() {
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip />
                 <Legend />
-                <Line 
+                <Line
                   yAxisId="left"
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#3B82F6" 
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#3B82F6"
                   strokeWidth={2}
                   name="Revenue ($)"
                 />
-                <Line 
+                <Line
                   yAxisId="right"
-                  type="monotone" 
-                  dataKey="contracts" 
-                  stroke="#10B981" 
+                  type="monotone"
+                  dataKey="contracts"
+                  stroke="#10B981"
                   strokeWidth={2}
                   name="Contracts"
                 />
-                <Line 
+                <Line
                   yAxisId="right"
-                  type="monotone" 
-                  dataKey="satisfaction" 
-                  stroke="#F59E0B" 
+                  type="monotone"
+                  dataKey="satisfaction"
+                  stroke="#F59E0B"
                   strokeWidth={2}
                   name="Satisfaction (%)"
                 />
@@ -322,7 +240,7 @@ export function ExecutiveSummaryDashboard() {
           <CardContent>
             <div className="space-y-4">
               {alerts.map((alert) => (
-                <div 
+                <div
                   key={alert.id}
                   className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >

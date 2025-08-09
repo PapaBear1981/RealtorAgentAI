@@ -1,58 +1,62 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Navigation } from "@/components/layout/Navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Activity, 
-  BarChart3, 
-  DollarSign, 
-  Users, 
-  Brain, 
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Zap
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+    Activity,
+    BarChart3,
+    Brain,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    TrendingUp,
+    Users
 } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { AgentPerformanceDashboard } from "@/components/analytics/AgentPerformanceDashboard"
 import { ContractProcessingDashboard } from "@/components/analytics/ContractProcessingDashboard"
 import { CostAnalysisDashboard } from "@/components/analytics/CostAnalysisDashboard"
-import { UserBehaviorDashboard } from "@/components/analytics/UserBehaviorDashboard"
-import { PredictiveAnalyticsDashboard } from "@/components/analytics/PredictiveAnalyticsDashboard"
 import { ExecutiveSummaryDashboard } from "@/components/analytics/ExecutiveSummaryDashboard"
+import { PredictiveAnalyticsDashboard } from "@/components/analytics/PredictiveAnalyticsDashboard"
+import { UserBehaviorDashboard } from "@/components/analytics/UserBehaviorDashboard"
+import { useToast } from "@/hooks/use-toast"
+import { analyticsService } from "@/services/analyticsService"
 
 export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [isLoading, setIsLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState<any>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate loading dashboard data
     const loadDashboardData = async () => {
       setIsLoading(true)
       try {
-        // TODO: Replace with actual API calls
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Mock data for demonstration
+        // Load real analytics data from backend
+        const overview = await analyticsService.getDashboardOverview(24)
+
         setDashboardData({
           overview: {
-            totalAgentExecutions: 1247,
-            successRate: 94.2,
-            averageProcessingTime: 2.3,
-            totalCost: 1234.56,
-            activeUsers: 23,
-            contractsProcessed: 89
+            totalAgentExecutions: overview.totalAgentExecutions,
+            successRate: overview.successRate,
+            averageProcessingTime: overview.averageProcessingTime,
+            totalCost: overview.totalCost,
+            activeUsers: overview.activeUsers,
+            contractsProcessed: overview.contractsProcessed
           }
         })
       } catch (error) {
         console.error("Failed to load dashboard data:", error)
+        toast({
+          title: "Failed to load analytics",
+          description: "Could not load analytics data. Please refresh the page.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
@@ -116,7 +120,7 @@ export default function AnalyticsPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navigation />
-        
+
         {/* Page Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,7 +152,7 @@ export default function AnalyticsPage() {
         {/* Main Content */}
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-            
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-6">
                 <TabsTrigger value="overview" className="flex items-center space-x-2">
@@ -198,7 +202,7 @@ export default function AnalyticsPage() {
                           )}
                         </div>
                         <div className="flex items-center space-x-2 mt-2">
-                          <Badge 
+                          <Badge
                             variant={metric.changeType === "positive" ? "default" : "destructive"}
                             className="text-xs"
                           >
