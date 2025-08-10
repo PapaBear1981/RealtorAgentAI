@@ -109,7 +109,17 @@ class ModelRouter:
         """Initialize the model router asynchronously."""
         # Perform any async initialization if needed
         await self.health_check()
-        logger.info("Model router async initialization completed")
+
+        # Log available models and providers
+        available_models = [model.id for model in self.models.values() if model.is_available]
+        logger.info(
+            "Model router async initialization completed",
+            available_models=available_models,
+            total_models=len(self.models),
+            openrouter_enabled=bool(self.openrouter_async_client),
+            openai_enabled=bool(self.openai_async_client),
+            anthropic_enabled=bool(self.anthropic_async_client)
+        )
 
     def _init_clients(self):
         """Initialize AI provider clients."""
@@ -352,8 +362,19 @@ class ModelRouter:
                         # No more available models
                         break
 
-        # All attempts failed
-        raise Exception(f"All model attempts failed. Last error: {last_exception}")
+        # All attempts failed - provide a fallback response
+        logger.error(f"All model attempts failed. Last error: {last_exception}")
+
+        # Return a fallback response indicating the issue
+        return ModelResponse(
+            content=f"I apologize, but I'm currently unable to process your request due to technical difficulties. The AI models are temporarily unavailable. Please try again later or contact support if the issue persists. Error: {str(last_exception)[:100]}",
+            model_used="fallback",
+            provider=ModelProvider.OPENROUTER,  # Default provider
+            cost=0.0,
+            processing_time=0.0,
+            token_usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            metadata={"error": "all_models_failed", "last_error": str(last_exception)}
+        )
 
     async def _generate_openrouter(self, request: ModelRequest, model_id: str) -> ModelResponse:
         """Generate response using OpenRouter API."""

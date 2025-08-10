@@ -126,7 +126,7 @@ class AssistantAgentService {
         actionStatus: 'in_progress'
       })
 
-      const aiResponse = await apiClient.post('/ai-agents/contract-fill', {
+      const aiResponse = await apiClient.post('/api/v1/ai-agents/contract-fill', {
         contract_type: contractType,
         source_data: documentData,
         deal_name: dealName,
@@ -161,15 +161,24 @@ class AssistantAgentService {
         actionStatus: 'in_progress'
       })
 
+      console.log('AI Response received:', aiResponse)
+      console.log('AI Response type:', typeof aiResponse)
+      console.log('AI Response keys:', Object.keys(aiResponse))
+      console.log('AI Response data keys:', Object.keys(aiResponse.data || {}))
+      console.log('AI Response ai_response field:', aiResponse.data?.ai_response)
+      console.log('AI Response ai_response type:', typeof aiResponse.data?.ai_response)
+      console.log('AI Response ai_response length:', aiResponse.data?.ai_response?.length || 0)
+      console.log('Full AI Response JSON:', JSON.stringify(aiResponse, null, 2))
+
       return {
         success: true,
         data: {
           contractType,
-          filledFields: aiResponse.data.extracted_variables,
+          filledFields: aiResponse.data?.extracted_variables,
           sourceFiles,
           contractId: generateUniqueId('contract'),  // contract?.id || generateUniqueId('contract'),
-          confidence: aiResponse.data.confidence || 0.85,
-          aiAgentResponse: aiResponse.data,
+          confidence: aiResponse.data?.confidence || 0.85,
+          aiAgentResponse: aiResponse.data?.ai_response,
         }
       }
 
@@ -239,7 +248,7 @@ class AssistantAgentService {
         actionStatus: 'in_progress'
       })
 
-      const aiResponse = await apiClient.post('/ai-agents/document-extract', {
+      const aiResponse = await apiClient.post('/api/v1/ai-agents/document-extract', {
         extracted_data: extractedData,
         target_fields: targetFields,
         source_files: sourceFiles,

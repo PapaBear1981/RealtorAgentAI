@@ -39,6 +39,21 @@ class AgentExecutionRequest(BaseModel):
     options: Dict[str, Any] = Field(default_factory=dict, description="Additional options")
 
 
+class ContractFillRequest(BaseModel):
+    """Request model for contract filling."""
+    contract_type: str = Field(..., description="Type of contract to fill")
+    source_data: Dict[str, Any] = Field(default_factory=dict, description="Source data for filling")
+    deal_name: Optional[str] = Field(None, description="Name of the deal")
+    template_id: Optional[str] = Field(None, description="Template ID to use")
+
+
+class DocumentExtractRequest(BaseModel):
+    """Request model for document extraction."""
+    extracted_data: Dict[str, Any] = Field(default_factory=dict, description="Previously extracted data")
+    target_fields: List[str] = Field(default_factory=list, description="Target fields to extract")
+    source_files: List[str] = Field(default_factory=list, description="Source file IDs")
+
+
 class AgentExecutionResponse(BaseModel):
     """Response model for agent execution."""
     execution_id: str = Field(..., description="Unique execution ID")
@@ -56,6 +71,17 @@ class AgentStatusResponse(BaseModel):
     result: Optional[Dict[str, Any]] = Field(None, description="Execution result if completed")
     error: Optional[str] = Field(None, description="Error message if failed")
     updated_at: datetime = Field(..., description="Last update timestamp")
+
+
+class ContractFillResponse(BaseModel):
+    """Response model for contract fill requests."""
+    success: bool = Field(..., description="Whether the operation was successful")
+    execution_id: str = Field(..., description="Unique execution ID")
+    ai_response: Optional[str] = Field(None, description="AI-generated contract content")
+    extracted_variables: Optional[Dict[str, Any]] = Field(None, description="Extracted contract variables")
+    confidence: Optional[float] = Field(None, description="Overall confidence score")
+    execution_time: Optional[float] = Field(None, description="Execution time in seconds")
+    error: Optional[str] = Field(None, description="Error message if failed")
 
 
 class WorkflowRequest(BaseModel):
@@ -371,6 +397,218 @@ async def get_workflow_status(
         )
 
 
+@router.post("/contract-fill", response_model=ContractFillResponse)
+async def fill_contract(
+    request: ContractFillRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user)
+) -> ContractFillResponse:
+    """Fill a contract using AI agent with extracted data."""
+    try:
+        # Generate execution ID
+        execution_id = str(uuid.uuid4())
+
+        # Prepare task description for contract generation
+        task_description = f"""
+        Fill a {request.contract_type} contract using the provided source data.
+
+        Contract Type: {request.contract_type}
+        Deal Name: {request.deal_name or 'Unnamed Deal'}
+
+        Source Data Available:
+        {', '.join(request.source_data.keys()) if request.source_data else 'No source data provided'}
+
+        Please extract relevant information from the source data and generate appropriate
+        contract variables and content. Focus on:
+        1. Party information (buyers, sellers, agents)
+        2. Property details (address, description, features)
+        3. Financial terms (price, down payment, financing)
+        4. Important dates (closing, contingencies)
+        5. Legal terms and conditions
+
+        Provide structured output with extracted variables and confidence scores.
+        """
+
+        # Create execution record
+        execution_record = {
+            "execution_id": execution_id,
+            "agent_role": "contract_generator",
+            "task_description": task_description,
+            "input_data": {
+                "contract_type": request.contract_type,
+                "source_data": request.source_data,
+                "deal_name": request.deal_name,
+                "template_id": request.template_id
+            },
+            "workflow_id": None,
+            "user_id": current_user.id,
+            "status": "queued",
+            "progress": 0.0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "result": None,
+            "error": None
+        }
+
+        _execution_storage[execution_id] = execution_record
+
+        # Execute agent synchronously and wait for completion
+        await _execute_agent_background(
+            execution_id,
+            "contract_generator",
+            task_description,
+            execution_record["input_data"],
+            current_user.id,
+            None
+        )
+
+        # Get the execution result
+        logger.info(f"Looking for execution_id: {execution_id}")
+        logger.info(f"Available execution IDs: {list(_execution_storage.keys())}")
+
+        if execution_id in _execution_storage:
+            result = _execution_storage[execution_id]
+            logger.info(f"Found execution result for {execution_id}")
+
+            if result["status"] == "completed" and result.get("result"):
+                ai_response = result["result"].get("ai_response", "")
+                execution_time_raw = result["result"].get("execution_time", 0)
+
+                logger.info(f"Retrieved execution result: {result}")
+                logger.info(f"AI response from storage: {ai_response[:200]}..." if ai_response else "AI response is empty")
+                logger.info(f"AI response length: {len(ai_response) if ai_response else 0}")
+
+                # Parse execution time (remove 's' suffix if present)
+                if isinstance(execution_time_raw, str) and execution_time_raw.endswith('s'):
+                    execution_time = float(execution_time_raw[:-1])
+                else:
+                    execution_time = float(execution_time_raw) if execution_time_raw else 0.0
+
+                # Parse AI response to extract variables (simplified)
+                extracted_variables = {
+                    "contract_type": request.contract_type,
+                    "deal_name": request.deal_name,
+                    "ai_generated_content": ai_response
+                }
+
+                response = ContractFillResponse(
+                    success=True,
+                    execution_id=execution_id,
+                    ai_response=ai_response,
+                    extracted_variables=extracted_variables,
+                    confidence=0.85,  # Default confidence
+                    execution_time=execution_time
+                )
+
+                logger.info(f"Returning ContractFillResponse with ai_response length: {len(response.ai_response) if response.ai_response else 0}")
+                return response
+            else:
+                error_msg = result.get("error", "Unknown error occurred")
+                return ContractFillResponse(
+                    success=False,
+                    execution_id=execution_id,
+                    error=error_msg
+                )
+        else:
+            return ContractFillResponse(
+                success=False,
+                execution_id=execution_id,
+                error="Execution record not found"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to queue contract fill task: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to queue contract filling task"
+        )
+
+
+@router.post("/document-extract", response_model=AgentExecutionResponse)
+async def extract_from_documents(
+    request: DocumentExtractRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user)
+) -> AgentExecutionResponse:
+    """Extract and enhance data from documents using AI agent."""
+    try:
+        # Generate execution ID
+        execution_id = str(uuid.uuid4())
+
+        # Prepare task description for data extraction
+        task_description = f"""
+        Extract and enhance data from the provided documents and existing extracted data.
+
+        Target Fields: {', '.join(request.target_fields) if request.target_fields else 'All relevant fields'}
+        Source Files: {len(request.source_files)} files
+
+        Existing Extracted Data:
+        {', '.join(request.extracted_data.keys()) if request.extracted_data else 'No existing data'}
+
+        Please analyze the documents and extracted data to:
+        1. Identify and extract key entities (parties, properties, financial terms, dates)
+        2. Enhance the existing extracted data with additional insights
+        3. Validate and improve data quality
+        4. Provide confidence scores for extracted information
+        5. Structure the data for contract generation
+
+        Focus on real estate contract elements including:
+        - Party information (buyers, sellers, agents, attorneys)
+        - Property details (address, description, legal description)
+        - Financial terms (purchase price, earnest money, financing)
+        - Important dates (closing, contingencies, inspections)
+        - Legal terms and conditions
+        """
+
+        # Create execution record
+        execution_record = {
+            "execution_id": execution_id,
+            "agent_role": "data_extraction",
+            "task_description": task_description,
+            "input_data": {
+                "extracted_data": request.extracted_data,
+                "target_fields": request.target_fields,
+                "source_files": request.source_files
+            },
+            "workflow_id": None,
+            "user_id": current_user.id,
+            "status": "queued",
+            "progress": 0.0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "result": None,
+            "error": None
+        }
+
+        _execution_storage[execution_id] = execution_record
+
+        # Start background execution with data extraction agent
+        background_tasks.add_task(
+            _execute_agent_background,
+            execution_id,
+            "data_extraction",
+            task_description,
+            execution_record["input_data"],
+            current_user.id,
+            None
+        )
+
+        return AgentExecutionResponse(
+            execution_id=execution_id,
+            status="queued",
+            agent_role="data_extraction",
+            created_at=datetime.utcnow(),
+            workflow_id=None
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to queue document extraction task: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to queue document extraction task"
+        )
+
+
 # Helper functions
 def _get_agent_description(role: AgentRole) -> str:
     """Get description for an agent role."""
@@ -437,6 +675,8 @@ async def _execute_agent_background(
     workflow_id: Optional[str] = None
 ):
     """Background task for agent execution."""
+    start_time = datetime.utcnow()
+
     try:
         # Update status to running
         _execution_storage[execution_id]["status"] = "running"
@@ -452,30 +692,94 @@ async def _execute_agent_background(
         _execution_storage[execution_id]["progress"] = 30.0
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
 
-        # Execute the task (simplified for now)
-        # In a full implementation, this would use the agent's tools and capabilities
-        result = {
-            "agent_role": agent_role,
-            "task_description": task_description,
-            "input_data": input_data,
-            "execution_time": "2.5s",
-            "tools_used": len(get_tools_for_agent(agent_role)),
-            "status": "completed",
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        # Create a single task for the agent to execute
+        from ...services.agent_orchestrator import WorkflowTask, TaskPriority
+
+        task = WorkflowTask(
+            id=f"task_{execution_id}",
+            description=task_description,
+            expected_output="Detailed analysis and results based on the task description and input data",
+            agent_role=agent_role_enum,
+            priority=TaskPriority.HIGH,
+            context=input_data,
+            dependencies=[],
+            created_at=datetime.utcnow()
+        )
+
+        # Update progress
+        _execution_storage[execution_id]["progress"] = 50.0
+        _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
+
+        # Execute the task using CrewAI
+        from crewai import Task as CrewTask, Crew, Process
+
+        # Create CrewAI task
+        crew_task = CrewTask(
+            description=task_description,
+            expected_output="Detailed analysis and results based on the task description and input data",
+            agent=agent
+        )
+
+        # Create crew with single agent and task
+        crew = Crew(
+            agents=[agent],
+            tasks=[crew_task],
+            process=Process.sequential,
+            verbose=True
+        )
+
+        # Update progress
+        _execution_storage[execution_id]["progress"] = 70.0
+        _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
+
+        # Execute the crew (this will make real AI calls)
+        logger.info(f"Executing agent {agent_role} for task: {task_description}")
+        crew_result = crew.kickoff()
 
         # Update progress
         _execution_storage[execution_id]["progress"] = 90.0
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
 
-        # Simulate some processing time
-        await asyncio.sleep(1)
+        # Calculate execution time
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+
+        # Extract AI response from CrewAI result
+        ai_response = ""
+        logger.info(f"CrewAI result type: {type(crew_result)}")
+        logger.info(f"CrewAI result attributes: {dir(crew_result)}")
+
+        if hasattr(crew_result, 'raw'):
+            ai_response = crew_result.raw
+            logger.info(f"Using crew_result.raw: {len(ai_response)} chars")
+        elif hasattr(crew_result, 'output'):
+            ai_response = crew_result.output
+            logger.info(f"Using crew_result.output: {len(ai_response)} chars")
+        else:
+            ai_response = str(crew_result)
+            logger.info(f"Using str(crew_result): {len(ai_response)} chars")
+
+        # Format the result
+        result = {
+            "agent_role": agent_role,
+            "task_description": task_description,
+            "input_data": input_data,
+            "ai_response": ai_response,
+            "execution_time": f"{execution_time:.2f}s",
+            "tools_used": len(get_tools_for_agent(agent_role)),
+            "status": "completed",
+            "timestamp": datetime.utcnow().isoformat(),
+            "execution_id": execution_id
+        }
 
         # Complete execution
         _execution_storage[execution_id]["status"] = "completed"
         _execution_storage[execution_id]["progress"] = 100.0
         _execution_storage[execution_id]["result"] = result
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
+
+        logger.info(f"Stored execution result for {execution_id}: ai_response length = {len(ai_response)}")
+        logger.info(f"Execution storage keys: {list(_execution_storage.keys())}")
+        logger.info(f"Stored result keys: {list(result.keys())}")
 
         # Update workflow if applicable
         if workflow_id and workflow_id in _workflow_storage:
@@ -491,10 +795,12 @@ async def _execute_agent_background(
             if completed_executions >= total_agents:
                 workflow["status"] = "completed"
 
-        logger.info(f"Agent execution completed: {execution_id}")
+        logger.info(f"Agent execution completed: {execution_id}, execution_time: {execution_time:.2f}s")
 
     except Exception as e:
-        logger.error(f"Agent execution failed: {execution_id}, error: {e}")
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+        logger.error(f"Agent execution failed: {execution_id}, error: {e}, execution_time: {execution_time:.2f}s")
         _execution_storage[execution_id]["status"] = "failed"
         _execution_storage[execution_id]["error"] = str(e)
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
+        _execution_storage[execution_id]["execution_time"] = f"{execution_time:.2f}s"

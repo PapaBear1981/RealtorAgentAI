@@ -52,15 +52,15 @@ class VersionControlInput(ToolInput):
 
 class TemplateFillTool(ContractTool):
     """Tool for filling contract templates with extracted data."""
-    
+
     @property
     def name(self) -> str:
         return "template_filler"
-    
+
     @property
     def description(self) -> str:
         return "Fill contract templates with extracted data using intelligent variable substitution"
-    
+
     async def execute(self, input_data: TemplateFillInput) -> ToolResult:
         """Fill a contract template with extracted data."""
         try:
@@ -72,27 +72,27 @@ class TemplateFillTool(ContractTool):
                     execution_time=0.0,
                     tool_name=self.name
                 )
-            
+
             # Load template
             template_data = await self._load_template(input_data.template_id)
-            
+
             # Map extracted data to template variables
             variable_mapping = await self._map_data_to_variables(
                 input_data.extracted_data,
                 template_data.get("variables", {}),
                 input_data.fill_options
             )
-            
+
             # Fill template
             filled_template = await self._fill_template_content(
                 template_data,
                 variable_mapping,
                 input_data.fill_options
             )
-            
+
             # Validate filled template
             validation_results = await self._validate_filled_template(filled_template)
-            
+
             return ToolResult(
                 success=True,
                 data={
@@ -111,7 +111,7 @@ class TemplateFillTool(ContractTool):
                 execution_time=0.0,
                 tool_name=self.name
             )
-            
+
         except Exception as e:
             return ToolResult(
                 success=False,
@@ -119,35 +119,60 @@ class TemplateFillTool(ContractTool):
                 execution_time=0.0,
                 tool_name=self.name
             )
-    
+
     async def _load_template(self, template_id: str) -> Dict[str, Any]:
         """Load template data from the template service."""
-        # This would integrate with the existing template service
-        # For now, return a mock template
+        try:
+            # Integrate with the existing template service
+            from ...services.template_service import get_template_service
+
+            template_service = get_template_service()
+            template_data = await template_service.get_template(template_id)
+
+            if not template_data:
+                # Fallback to a basic template if specific template not found
+                logger.warning(f"Template {template_id} not found, using default template")
+                return self._get_default_template()
+
+            return template_data
+
+        except Exception as e:
+            logger.error(f"Failed to load template {template_id}: {e}")
+            # Return a basic fallback template
+            return self._get_default_template()
+
+    def _get_default_template(self) -> Dict[str, Any]:
+        """Get a default real estate contract template."""
         return {
-            "id": template_id,
-            "name": "Sample Real Estate Contract",
+            "id": "default_real_estate",
+            "name": "Default Real Estate Purchase Agreement",
             "content": """
             REAL ESTATE PURCHASE AGREEMENT
-            
+
             This agreement is made between {{buyer_name}} (Buyer) and {{seller_name}} (Seller)
             for the purchase of the property located at {{property_address}}.
-            
+
             Purchase Price: {{purchase_price}}
             Down Payment: {{down_payment}}
             Closing Date: {{closing_date}}
-            
+
             Property Description:
             {{property_description}}
-            
+
             Terms and Conditions:
             {{terms_and_conditions}}
+
+            Contingencies:
+            {{contingencies}}
+
+            Additional Terms:
+            {{additional_terms}}
             """,
             "variables": {
-                "buyer_name": {"type": "text", "required": True},
-                "seller_name": {"type": "text", "required": True},
-                "property_address": {"type": "address", "required": True},
-                "purchase_price": {"type": "currency", "required": True},
+                "buyer_name": {"type": "text", "required": True, "description": "Full name of the buyer"},
+                "seller_name": {"type": "text", "required": True, "description": "Full name of the seller"},
+                "property_address": {"type": "address", "required": True, "description": "Complete property address"},
+                "purchase_price": {"type": "currency", "required": True, "description": "Total purchase price"},
                 "down_payment": {"type": "currency", "required": True},
                 "closing_date": {"type": "date", "required": True},
                 "property_description": {"type": "text", "required": False},
@@ -159,19 +184,19 @@ class TemplateFillTool(ContractTool):
                 "category": "residential_purchase"
             }
         }
-    
-    async def _map_data_to_variables(self, 
+
+    async def _map_data_to_variables(self,
                                    extracted_data: Dict[str, Any],
                                    template_variables: Dict[str, Any],
                                    options: Dict[str, Any]) -> Dict[str, Any]:
         """Map extracted data to template variables."""
         variable_mapping = {}
-        
+
         for var_name, var_config in template_variables.items():
             mapped_value = await self._find_matching_data(
                 var_name, var_config, extracted_data
             )
-            
+
             variable_mapping[var_name] = {
                 "value": mapped_value,
                 "source": self._get_data_source(var_name, extracted_data),
@@ -179,20 +204,20 @@ class TemplateFillTool(ContractTool):
                 "required": var_config.get("required", False),
                 "filled": mapped_value is not None
             }
-        
+
         return variable_mapping
-    
-    async def _find_matching_data(self, 
-                                var_name: str, 
+
+    async def _find_matching_data(self,
+                                var_name: str,
                                 var_config: Dict[str, Any],
                                 extracted_data: Dict[str, Any]) -> Optional[str]:
         """Find matching data for a template variable."""
         var_type = var_config.get("type", "text")
-        
+
         # Direct mapping strategies
         if var_name in extracted_data:
             return str(extracted_data[var_name])
-        
+
         # Smart mapping based on variable name and type
         if var_name == "buyer_name":
             return self._find_party_name(extracted_data, "buyer")
@@ -206,9 +231,9 @@ class TemplateFillTool(ContractTool):
             return self._find_financial_amount(extracted_data, "down_payment")
         elif var_name == "closing_date":
             return self._find_date(extracted_data, "closing")
-        
+
         return None
-    
+
     def _find_party_name(self, data: Dict[str, Any], role: str) -> Optional[str]:
         """Find party name by role."""
         parties = data.get("parties", [])
@@ -217,14 +242,14 @@ class TemplateFillTool(ContractTool):
                 if isinstance(party, dict) and party.get("role", "").lower() == role.lower():
                     return party.get("name")
         return None
-    
+
     def _find_address(self, data: Dict[str, Any]) -> Optional[str]:
         """Find property address."""
         addresses = data.get("addresses", [])
         if isinstance(addresses, list) and addresses:
             return addresses[0].get("value") if isinstance(addresses[0], dict) else str(addresses[0])
         return None
-    
+
     def _find_financial_amount(self, data: Dict[str, Any], amount_type: str) -> Optional[str]:
         """Find financial amount by type."""
         financial = data.get("financial_terms", [])
@@ -233,7 +258,7 @@ class TemplateFillTool(ContractTool):
                 if isinstance(item, dict) and amount_type.lower() in item.get("value", "").lower():
                     return item.get("value")
         return None
-    
+
     def _find_date(self, data: Dict[str, Any], date_type: str) -> Optional[str]:
         """Find date by type."""
         dates = data.get("dates", [])
@@ -241,30 +266,30 @@ class TemplateFillTool(ContractTool):
             # For now, return the first date found
             return dates[0].get("value") if isinstance(dates[0], dict) else str(dates[0])
         return None
-    
+
     def _get_data_source(self, var_name: str, data: Dict[str, Any]) -> str:
         """Get the source of mapped data."""
         # This would track which extraction category provided the data
         return "extracted_data"
-    
+
     def _get_mapping_confidence(self, var_name: str, value: Any, data: Dict[str, Any]) -> float:
         """Calculate confidence score for variable mapping."""
         if value is None:
             return 0.0
-        
+
         # Simple confidence calculation
         if var_name in data:
             return 0.95  # Direct match
         else:
             return 0.75  # Inferred match
-    
-    async def _fill_template_content(self, 
+
+    async def _fill_template_content(self,
                                    template_data: Dict[str, Any],
                                    variable_mapping: Dict[str, Any],
                                    options: Dict[str, Any]) -> Dict[str, Any]:
         """Fill template content with mapped variables."""
         content = template_data.get("content", "")
-        
+
         # Replace variables in content
         for var_name, mapping in variable_mapping.items():
             if mapping["filled"]:
@@ -275,7 +300,7 @@ class TemplateFillTool(ContractTool):
                 if mapping["required"]:
                     placeholder = f"{{{{{var_name}}}}}"
                     content = content.replace(placeholder, f"[MISSING: {var_name}]")
-        
+
         return {
             "content": content,
             "template_id": template_data["id"],
@@ -283,7 +308,7 @@ class TemplateFillTool(ContractTool):
             "filled_variables": {k: v["value"] for k, v in variable_mapping.items() if v["filled"]},
             "missing_variables": [k for k, v in variable_mapping.items() if not v["filled"] and v["required"]]
         }
-    
+
     async def _validate_filled_template(self, filled_template: Dict[str, Any]) -> Dict[str, Any]:
         """Validate the filled template."""
         validation_results = {
@@ -292,34 +317,34 @@ class TemplateFillTool(ContractTool):
             "warnings": [],
             "completeness_score": 0.0
         }
-        
+
         # Check for missing required variables
         missing_vars = filled_template.get("missing_variables", [])
         if missing_vars:
             validation_results["is_valid"] = False
             validation_results["errors"].extend([f"Missing required variable: {var}" for var in missing_vars])
-        
+
         # Check for placeholder patterns that weren't filled
         content = filled_template.get("content", "")
         unfilled_placeholders = re.findall(r'\{\{[^}]+\}\}', content)
         if unfilled_placeholders:
             validation_results["warnings"].extend([f"Unfilled placeholder: {ph}" for ph in unfilled_placeholders])
-        
+
         # Calculate completeness score
         filled_vars = len(filled_template.get("filled_variables", {}))
         total_vars = filled_vars + len(missing_vars)
         validation_results["completeness_score"] = filled_vars / total_vars if total_vars > 0 else 1.0
-        
+
         return validation_results
-    
+
     def _calculate_fill_percentage(self, variable_mapping: Dict[str, Any]) -> float:
         """Calculate the percentage of variables that were filled."""
         if not variable_mapping:
             return 0.0
-        
+
         filled_count = sum(1 for mapping in variable_mapping.values() if mapping["filled"])
         return (filled_count / len(variable_mapping)) * 100
-    
+
     def _get_missing_variables(self, variable_mapping: Dict[str, Any]) -> List[str]:
         """Get list of missing required variables."""
         return [
@@ -330,15 +355,15 @@ class TemplateFillTool(ContractTool):
 
 class ClauseGenerationTool(ContractTool):
     """Tool for generating contract clauses based on context."""
-    
+
     @property
     def name(self) -> str:
         return "clause_generator"
-    
+
     @property
     def description(self) -> str:
         return "Generate contract clauses based on context data and legal requirements"
-    
+
     async def execute(self, input_data: ClauseGenerationInput) -> ToolResult:
         """Generate a contract clause based on context."""
         try:
@@ -347,21 +372,21 @@ class ClauseGenerationTool(ContractTool):
                 input_data.clause_type,
                 input_data.jurisdiction
             )
-            
+
             # Generate clause content
             generated_clause = await self._generate_clause_content(
                 clause_template,
                 input_data.context_data,
                 input_data.style_preferences
             )
-            
+
             # Validate generated clause
             validation_results = await self._validate_clause(
                 generated_clause,
                 input_data.clause_type,
                 input_data.jurisdiction
             )
-            
+
             return ToolResult(
                 success=True,
                 data={
@@ -379,7 +404,7 @@ class ClauseGenerationTool(ContractTool):
                 execution_time=0.0,
                 tool_name=self.name
             )
-            
+
         except Exception as e:
             return ToolResult(
                 success=False,
@@ -387,7 +412,7 @@ class ClauseGenerationTool(ContractTool):
                 execution_time=0.0,
                 tool_name=self.name
             )
-    
+
     async def _get_clause_template(self, clause_type: str, jurisdiction: str) -> Dict[str, Any]:
         """Get clause template for the specified type and jurisdiction."""
         # This would load from a clause template database
@@ -399,7 +424,7 @@ class ClauseGenerationTool(ContractTool):
                 "legal_requirements": ["must_specify_condition", "must_specify_timeframe"]
             },
             "financing": {
-                "id": "financing_template", 
+                "id": "financing_template",
                 "content": "Buyer's obligation to purchase is contingent upon obtaining financing in the amount of {loan_amount} at an interest rate not to exceed {max_interest_rate}% per annum.",
                 "variables": ["loan_amount", "max_interest_rate"],
                 "legal_requirements": ["must_specify_amount", "must_specify_rate"]
@@ -411,55 +436,55 @@ class ClauseGenerationTool(ContractTool):
                 "legal_requirements": ["must_specify_period"]
             }
         }
-        
+
         return templates.get(clause_type, {
             "id": "default_template",
             "content": f"Standard {clause_type} clause for {jurisdiction} jurisdiction.",
             "variables": [],
             "legal_requirements": []
         })
-    
-    async def _generate_clause_content(self, 
+
+    async def _generate_clause_content(self,
                                      template: Dict[str, Any],
                                      context_data: Dict[str, Any],
                                      style_preferences: Dict[str, Any]) -> Dict[str, Any]:
         """Generate clause content from template and context."""
         content = template.get("content", "")
         variables = template.get("variables", [])
-        
+
         # Fill template variables with context data
         for variable in variables:
             if variable in context_data:
                 placeholder = f"{{{variable}}}"
                 content = content.replace(placeholder, str(context_data[variable]))
-        
+
         # Apply style preferences
         if style_preferences.get("formal_language", True):
             content = self._apply_formal_language(content)
-        
+
         if style_preferences.get("include_definitions", False):
             content = self._add_definitions(content)
-        
+
         return {
             "content": content,
             "template_id": template.get("id"),
             "variables_used": [v for v in variables if v in context_data],
             "style_applied": style_preferences
         }
-    
+
     def _apply_formal_language(self, content: str) -> str:
         """Apply formal legal language patterns."""
         # Simple formal language transformations
         content = content.replace("will", "shall")
         content = content.replace("can", "may")
         return content
-    
+
     def _add_definitions(self, content: str) -> str:
         """Add definitions section if requested."""
         definitions = "\n\nDefinitions: Terms used in this clause shall have the meanings set forth in the main agreement."
         return content + definitions
-    
-    async def _validate_clause(self, 
+
+    async def _validate_clause(self,
                              clause: Dict[str, Any],
                              clause_type: str,
                              jurisdiction: str) -> Dict[str, Any]:
@@ -470,35 +495,35 @@ class ClauseGenerationTool(ContractTool):
             "issues": [],
             "suggestions": []
         }
-        
+
         content = clause.get("content", "")
-        
+
         # Basic validation checks
         if len(content) < 10:
             validation_results["is_valid"] = False
             validation_results["issues"].append("Clause content is too short")
-        
+
         if not content.strip().endswith('.'):
             validation_results["suggestions"].append("Consider ending clause with proper punctuation")
-        
+
         # Clause-specific validation
         if clause_type == "contingency" and "contingent" not in content.lower():
             validation_results["issues"].append("Contingency clause should contain 'contingent' language")
-        
+
         return validation_results
 
 
 class DocumentGenerationTool(ContractTool):
     """Tool for generating formatted contract documents."""
-    
+
     @property
     def name(self) -> str:
         return "document_generator"
-    
+
     @property
     def description(self) -> str:
         return "Generate formatted contract documents in DOCX or PDF format"
-    
+
     async def execute(self, input_data: DocumentGenerationInput) -> ToolResult:
         """Generate a formatted contract document."""
         try:
@@ -515,7 +540,7 @@ class DocumentGenerationTool(ContractTool):
                 )
             else:
                 raise ValueError(f"Unsupported output format: {input_data.output_format}")
-            
+
             return ToolResult(
                 success=True,
                 data={
@@ -534,7 +559,7 @@ class DocumentGenerationTool(ContractTool):
                 execution_time=0.0,
                 tool_name=self.name
             )
-            
+
         except Exception as e:
             return ToolResult(
                 success=False,
@@ -542,14 +567,14 @@ class DocumentGenerationTool(ContractTool):
                 execution_time=0.0,
                 tool_name=self.name
             )
-    
-    async def _generate_docx(self, 
+
+    async def _generate_docx(self,
                            filled_template: Dict[str, Any],
                            formatting_options: Dict[str, Any]) -> Dict[str, Any]:
         """Generate DOCX document."""
         # This would use python-docx library in production
         document_id = f"contract_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        
+
         return {
             "document_id": document_id,
             "file_path": f"/tmp/{document_id}.docx",
@@ -562,14 +587,14 @@ class DocumentGenerationTool(ContractTool):
                 "format": "docx"
             }
         }
-    
-    async def _generate_pdf(self, 
+
+    async def _generate_pdf(self,
                           filled_template: Dict[str, Any],
                           formatting_options: Dict[str, Any]) -> Dict[str, Any]:
         """Generate PDF document."""
         # This would use reportlab or similar library in production
         document_id = f"contract_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        
+
         return {
             "document_id": document_id,
             "file_path": f"/tmp/{document_id}.pdf",
