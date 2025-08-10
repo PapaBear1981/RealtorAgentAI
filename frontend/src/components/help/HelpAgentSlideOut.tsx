@@ -135,7 +135,9 @@ Would you like me to try again or help you with something else?`,
             conversation_history: messages.slice(-10).map(msg => ({
               role: msg.type === 'user' ? 'user' : 'assistant',
               content: msg.content,
-              timestamp: new Date().toISOString()
+              timestamp: typeof msg.timestamp === 'string'
+                ? msg.timestamp
+                : new Date(msg.timestamp).toISOString()
             })),
             current_page: currentContext.page,
             available_files: [] // This will be populated by the backend
@@ -254,65 +256,7 @@ ${data.results.map((result: any) => `• **${result.fileName}** (${result.releva
     }
   }
 
-  const generateAgentResponse = (userInput: string, context: any): string => {
-    const input = userInput.toLowerCase()
 
-    if (input.includes("available") || input.includes("what") && (input.includes("files") || input.includes("contracts"))) {
-      return `**Available Resources:**
-
-**📁 Files in your system:**
-${context.availableFiles?.map((file: string) => `• ${file}`).join('\n') || '• No files currently available'}
-
-**📄 Contract Templates:**
-${context.availableContracts?.map((contract: string) => `• ${contract}`).join('\n') || '• No contract templates available'}
-
-**💡 What I can do for you:**
-• **"Fill out [contract] using [files]"** - I'll extract info and populate contracts
-• **"Extract information from [files]"** - I'll analyze and organize document data
-• **"Send [contract] for signatures"** - I'll initiate the signature process
-• **"Search for [information]"** - I'll find specific data in your files
-
-Just tell me what you'd like me to do!`
-    }
-
-    if (input.includes("help") || input.includes("what can you do")) {
-      return `**I'm your AI Assistant Agent!** I can actively perform tasks for you:
-
-**🔧 Actions I can perform:**
-• **Fill out contracts** using information from your uploaded files
-• **Extract data** from documents and organize it for you
-• **Send contracts** for review and signatures automatically
-• **Search through** your files to find specific information
-• **Coordinate workflows** between different parts of the system
-
-**💬 Example commands:**
-• *"Fill out the Purchase Agreement using the Johnson's files"*
-• *"Extract all information from the uploaded documents"*
-• *"Send the completed contract for signatures"*
-• *"Search for property details in my files"*
-
-**🎯 Quick Actions:**
-Use the buttons above for common tasks, or just tell me what you'd like me to do in natural language!
-
-I'm here to make your real estate workflow faster and more efficient. What would you like me to help you accomplish?`
-    }
-
-    // Default response for unrecognized questions
-    return `I'm your AI Assistant Agent, and I can help you accomplish tasks automatically!
-
-**🤖 I can perform actions like:**
-• Fill out contracts using your uploaded files
-• Extract and organize information from documents
-• Send contracts for signatures and review
-• Search through your files for specific information
-
-**💡 Try saying something like:**
-• *"Fill out a Purchase Agreement using the Johnson files"*
-• *"Extract information from my uploaded documents"*
-• *"Send this contract for signatures"*
-
-Based on your current context${context?.documentName ? ` working on "${context.documentName}"` : ''} on the ${context?.page || 'current'} page, what would you like me to help you accomplish?`
-  }
 
   const handleQuickAction = (action: QuickAction) => {
     sendMessage(action.prompt)

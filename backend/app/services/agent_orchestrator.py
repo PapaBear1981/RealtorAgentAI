@@ -117,7 +117,6 @@ class ModelRouterLLM(LLM):
             Generated response content
         """
         import concurrent.futures
-        import threading
 
         def run_async_in_thread():
             """Run the async call in a separate thread with its own event loop."""

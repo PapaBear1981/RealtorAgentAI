@@ -15,10 +15,7 @@ from ...core.dependencies import get_current_active_user
 from ...models.user import User
 from ...services.conversation_service import (
     ConversationService,
-    ConversationContext,
-    ConversationResponse,
-    ConversationIntent,
-    ConversationTone
+    ConversationContext
 )
 from ...services.model_router import get_model_router
 from ...services.file_service import FileService
@@ -94,23 +91,12 @@ async def process_chat_message(
         model_router = get_model_router()
         conversation_service = ConversationService(model_router)
 
-        # Get available files for context
-        file_service = FileService()
-        try:
-            # This would typically get user files from the database
-            # For now, we'll use the files from the request or return empty list
-            file_names = request.available_files or []
-        except Exception as e:
-            logger.warning(f"Could not retrieve user files: {e}")
-            file_names = request.available_files
+        # Available files (frontend should pass; otherwise empty for now)
+        file_names = request.available_files or []
 
-        # Build conversation context
-        # Create a mock user for now (until authentication is fixed)
-        from types import SimpleNamespace
-        mock_user = SimpleNamespace(id=1, name="admin", role="admin")
-
+        # Build conversation context with the authenticated user
         context = ConversationContext(
-            user=mock_user,
+            user=current_user,
             current_page=request.current_page,
             recent_messages=[
                 {
@@ -151,7 +137,7 @@ async def process_chat_message(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process chat message: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/execute-task", response_model=TaskExecutionResponse)

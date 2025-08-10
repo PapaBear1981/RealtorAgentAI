@@ -25,11 +25,11 @@ __all__ = [
     "extract_metadata",
     "virus_scan_file",
 
-    # OCR tasks
-    "extract_text_from_pdf",
-    "extract_text_from_image",
-    "process_document_ocr",
-    "enhance_text_quality",
+    # OCR tasks (temporarily disabled due to pytesseract dependency)
+    # "extract_text_from_pdf",
+    # "extract_text_from_image",
+    # "process_document_ocr",
+    # "enhance_text_quality",
 
     # LLM tasks
     "analyze_contract_content",

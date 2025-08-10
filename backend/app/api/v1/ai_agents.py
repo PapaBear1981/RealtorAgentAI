@@ -692,19 +692,8 @@ async def _execute_agent_background(
         _execution_storage[execution_id]["progress"] = 30.0
         _execution_storage[execution_id]["updated_at"] = datetime.utcnow()
 
-        # Create a single task for the agent to execute
-        from ...services.agent_orchestrator import WorkflowTask, TaskPriority
-
-        task = WorkflowTask(
-            id=f"task_{execution_id}",
-            description=task_description,
-            expected_output="Detailed analysis and results based on the task description and input data",
-            agent_role=agent_role_enum,
-            priority=TaskPriority.HIGH,
-            context=input_data,
-            dependencies=[],
-            created_at=datetime.utcnow()
-        )
+        # If needed, persist task metadata to workflow/execution storage here
+        # (removed unused WorkflowTask local variable)
 
         # Update progress
         _execution_storage[execution_id]["progress"] = 50.0
@@ -734,7 +723,8 @@ async def _execute_agent_background(
 
         # Execute the crew (this will make real AI calls)
         logger.info(f"Executing agent {agent_role} for task: {task_description}")
-        crew_result = crew.kickoff()
+        # Offload blocking call to a thread to avoid blocking the event loop
+        crew_result = await asyncio.to_thread(crew.kickoff)
 
         # Update progress
         _execution_storage[execution_id]["progress"] = 90.0

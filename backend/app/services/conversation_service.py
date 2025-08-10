@@ -13,7 +13,7 @@ capabilities for the AI Assistant Agent, enabling:
 
 import re
 import json
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -259,7 +259,7 @@ class ConversationService:
         # Use AI to break down the multi-task request
         task_breakdown = await self._break_down_multi_task_with_ai(message, context)
 
-        content = f"I understand you want me to handle multiple tasks. Let me break this down:\n\n"
+        content = "I understand you want me to handle multiple tasks. Let me break this down:\n\n"
 
         for i, task in enumerate(task_breakdown.get('tasks', []), 1):
             content += f"**Step {i}: {task['title']}**\n"
@@ -294,7 +294,7 @@ class ConversationService:
 
     async def _handle_status_check(self, message: str, context: ConversationContext) -> ConversationResponse:
         """Handle status and progress check requests."""
-        status_info = self._get_current_status(context)
+        # status_info = self._get_current_status(context)
 
         content = "**Current Status Update:**\n\n"
 
