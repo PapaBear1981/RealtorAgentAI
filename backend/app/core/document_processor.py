@@ -17,9 +17,9 @@ import os
 # Document processing imports
 # import pymupdf4llm  # Temporarily disabled for debugging
 # import fitz  # PyMuPDF  # Temporarily disabled for debugging
-from docx import Document as DocxDocument
+# from docx import Document as DocxDocument  # Temporarily disabled for testing
 from PIL import Image
-import pytesseract
+# import pytesseract  # Temporarily disabled for server startup
 
 from .config import get_settings
 
@@ -149,7 +149,7 @@ class DocumentProcessor:
                     pass
                 else:
                     # Use basic PyMuPDF extraction
-                    doc = fitz.open(temp_path)
+                    # doc = fitz.open(temp_path)  # Temporarily disabled
                     extracted_text = ""
                     pages_data = []
 
