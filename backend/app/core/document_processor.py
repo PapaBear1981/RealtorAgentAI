@@ -19,7 +19,7 @@ import os
 # import fitz  # PyMuPDF  # Temporarily disabled for debugging
 # from docx import Document as DocxDocument  # Temporarily disabled for testing
 from PIL import Image
-import pytesseract
+# import pytesseract  # Temporarily disabled for server startup
 
 from .config import get_settings
 

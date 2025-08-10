@@ -1,5 +1,5 @@
 # FastAPI and Core Dependencies
-fastapi[standard]==0.115.13
+fastapi==0.115.13
 uvicorn[standard]==0.32.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
@@ -21,7 +21,7 @@ kombu==5.4.2
 
 # File Processing & OCR
 python-magic==0.4.27
-PyMuPDF==1.25.2
+PyMuPDF>=1.26.3
 pdfplumber==0.11.4
 python-docx==1.1.2
 Pillow==11.0.0
@@ -33,7 +33,7 @@ boto3==1.35.95
 minio==7.2.11
 
 # AI/LLM Integration
-openai==1.59.3
+openai>=1.68.2
 anthropic==0.42.0
 crewai==0.152.0
 langchain==0.3.13

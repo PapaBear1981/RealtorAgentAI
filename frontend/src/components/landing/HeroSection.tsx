@@ -1,14 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Play, ArrowRight, Sparkles } from "lucide-react"
+import { motion } from "framer-motion"
+import { ArrowRight, Play, Sparkles } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export function HeroSection() {
   const [displayedText, setDisplayedText] = useState("")
+  const [floatingElements, setFloatingElements] = useState<Array<{left: string, top: string}>>([])
+  const [isClient, setIsClient] = useState(false)
   const fullText = "Revolutionize Your Real Estate Contracts with AI"
-  
+
+  // Client-side only rendering to avoid hydration mismatch
+  useEffect(() => {
+    setIsClient(true)
+    // Generate consistent floating element positions on client side only
+    const elements = Array.from({ length: 6 }, () => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`
+    }))
+    setFloatingElements(elements)
+  }, [])
+
   // Typewriter effect
   useEffect(() => {
     let currentIndex = 0
@@ -46,29 +59,31 @@ export function HeroSection() {
         />
       </div>
 
-      {/* Floating Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-blue-400/20 rounded-full"
-            animate={{
-              y: [-20, -100],
-              x: [0, Math.random() * 100 - 50],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Floating Elements - Client-side only to avoid hydration mismatch */}
+      {isClient && (
+        <div className="absolute inset-0 overflow-hidden">
+          {floatingElements.map((element, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-blue-400/20 rounded-full"
+              animate={{
+                y: [-20, -100],
+                x: [0, (i % 2 === 0 ? 1 : -1) * (25 + i * 5)], // Deterministic x movement
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 3 + (i * 0.3), // Deterministic duration based on index
+                repeat: Infinity,
+                delay: i * 0.4, // Deterministic delay based on index
+              }}
+              style={{
+                left: element.left,
+                top: element.top,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -103,14 +118,14 @@ export function HeroSection() {
                 |
               </motion.span>
             </h1>
-            
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.5 }}
               className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
             >
-              Save 80% of your time on contract workflows while ensuring 100% compliance with our 
+              Save 80% of your time on contract workflows while ensuring 100% compliance with our
               AI-powered document processing, contract generation, and signature tracking platform.
             </motion.p>
           </div>
@@ -168,7 +183,7 @@ export function HeroSection() {
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     <div className="flex-1 bg-muted rounded-md h-6 ml-4"></div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-3">
                       <div className="h-4 bg-blue-200 dark:bg-blue-800 rounded animate-pulse"></div>
@@ -188,7 +203,7 @@ export function HeroSection() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Floating Dashboard Elements */}
               <motion.div
                 animate={{ y: [0, -10, 0] }}
@@ -197,7 +212,7 @@ export function HeroSection() {
               >
                 <span className="text-sm font-semibold">AI Processing</span>
               </motion.div>
-              
+
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 1 }}
