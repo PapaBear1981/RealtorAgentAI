@@ -11,6 +11,13 @@ interface Message {
   actionType?: 'contract_fill' | 'document_extract' | 'signature_send' | 'review_request' | 'file_search'
   actionStatus?: 'pending' | 'in_progress' | 'completed' | 'failed'
   actionData?: any
+  metadata?: {
+    intent?: string
+    tone?: string
+    confidence?: number
+    suggested_actions?: any[]
+    follow_up_questions?: string[]
+  }
 }
 
 interface AgentAction {
@@ -102,11 +109,20 @@ Just tell me what you'd like me to do! For example: "Fill out the Purchase Agree
       updateContext: (context) => {
         set({ currentContext: context })
 
-        // Add a context update message if the page changed
+        // Only add context messages if the user has interacted with the agent
+        // (i.e., if there are user messages in the conversation)
         const currentState = get()
+        const hasUserMessages = currentState.messages.some(msg => msg.type === 'user')
         const lastMessage = currentState.messages[currentState.messages.length - 1]
 
-        if (lastMessage && lastMessage.context !== context.page) {
+        // Only add automatic context messages if:
+        // 1. User has sent at least one message (showing they're actively using the agent)
+        // 2. The page actually changed
+        // 3. The last message wasn't already a context message
+        if (hasUserMessages &&
+            lastMessage &&
+            lastMessage.context !== context.page &&
+            !lastMessage.content.includes("I can see you're now on the")) {
           const contextMessage: Message = {
             id: generateUniqueId(),
             type: 'agent',

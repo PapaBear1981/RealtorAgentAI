@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
+import { apiClient } from "@/services/apiClient"
 import { assistantAgentService } from "@/services/assistantAgentService"
 import { useAssistantAgentStore } from "@/stores/helpAgentStore"
 import { useEffect, useRef, useState } from "react"
@@ -58,7 +59,8 @@ export function HelpAgentSlideOut() {
     currentActions,
     togglePanel,
     addMessage,
-    setLoading
+    setLoading,
+    clearMessages
   } = useAssistantAgentStore()
 
   const [inputValue, setInputValue] = useState('')
@@ -122,20 +124,85 @@ Would you like me to try again or help you with something else?`,
           })
         }
       } else {
-        // This is a question - provide informational response
-        setTimeout(() => {
-          const agentResponse = generateAgentResponse(content.trim(), currentContext)
+        // Use the enhanced chat API for intelligent conversation
+        try {
+          const response = await apiClient.post('/api/v1/chat/message', {
+            message: content.trim(),
+            context: {
+              page: currentContext.page,
+              documentName: currentContext.documentName
+            },
+            conversation_history: messages.slice(-10).map(msg => ({
+              role: msg.type === 'user' ? 'user' : 'assistant',
+              content: msg.content,
+              timestamp: typeof msg.timestamp === 'string'
+                ? msg.timestamp
+                : new Date(msg.timestamp).toISOString()
+            })),
+            current_page: currentContext.page,
+            available_files: [] // This will be populated by the backend
+          })
+
+          const chatResponse = response.data
+
+          // Add AI response
           addMessage({
             type: 'agent',
-            content: agentResponse,
+            content: chatResponse.content,
+            context: currentContext.page,
+            metadata: {
+              intent: chatResponse.intent,
+              tone: chatResponse.tone,
+              confidence: chatResponse.confidence,
+              suggested_actions: chatResponse.suggested_actions,
+              follow_up_questions: chatResponse.follow_up_questions
+            }
+          })
+
+          // If the response includes task breakdown, handle multi-task execution
+          if (chatResponse.task_breakdown && chatResponse.task_breakdown.length > 0) {
+            // Add task breakdown as a separate message
+            const taskBreakdownContent = `**Task Breakdown:**\n\n${chatResponse.task_breakdown.map((task, index) =>
+              `**${index + 1}. ${task.title}**\n• ${task.description}\n${task.estimated_time ? `• Estimated time: ${task.estimated_time}\n` : ''}`
+            ).join('\n')}`
+
+            addMessage({
+              type: 'agent',
+              content: taskBreakdownContent,
+              context: currentContext.page
+            })
+          }
+
+          // If clarification is required, add follow-up questions
+          if (chatResponse.requires_clarification && chatResponse.follow_up_questions.length > 0) {
+            const clarificationContent = `**I need a bit more information:**\n\n${chatResponse.follow_up_questions.map(q => `• ${q}`).join('\n')}`
+
+            addMessage({
+              type: 'agent',
+              content: clarificationContent,
+              context: currentContext.page
+            })
+          }
+
+        } catch (apiError) {
+          console.error('Enhanced chat API failed:', apiError)
+
+          // Show detailed error message instead of fallback response
+          const errorMessage = `❌ **AI Assistant Connection Error**\n\nFailed to connect to the enhanced AI system.\n\n**Error Details:**\n${apiError instanceof Error ? apiError.message : JSON.stringify(apiError)}\n\n**Troubleshooting:**\n• Check if backend server is running on port 8000\n• Verify authentication token is valid\n• Check network connectivity\n• Review browser console for additional errors\n\n*No automated fallback response available - please resolve the connection issue.*`
+
+          addMessage({
+            type: 'agent',
+            content: errorMessage,
             context: currentContext.page
           })
-        }, 1000)
+        }
       }
     } catch (error) {
+      console.error('Message processing error:', error)
+
       addMessage({
         type: 'agent',
-        content: `I apologize, but I encountered an error processing your request. Please try again or rephrase your request.`,
+        content: `❌ **Message Processing Error**\n\nAn unexpected error occurred while processing your message.\n\n**Error Details:**\n${error instanceof Error ? error.message : 'Unknown error'}\n\n**Please:**\n• Check the browser console for more details\n• Try refreshing the page\n• Contact support if the issue persists\n\n*This is a system error, not a fallback response.*`,
         context: currentContext.page
       })
     } finally {
@@ -146,15 +213,19 @@ Would you like me to try again or help you with something else?`,
   const formatActionResult = (actionType: string, data: any): string => {
     switch (actionType) {
       case 'contract_fill':
-        return `**Contract Filled Successfully:**
-• **Contract Type:** ${data.contractType}
-• **Buyer:** ${data.filledFields.buyerName}
-• **Seller:** ${data.filledFields.sellerName}
-• **Property:** ${data.filledFields.propertyAddress}
-• **Purchase Price:** ${data.filledFields.purchasePrice}
-• **Closing Date:** ${data.filledFields.closingDate}
+        return `**✅ Contract Generated Successfully!**
 
-The contract has been populated with information from: ${data.sourceFiles.join(', ')}`
+**📋 Contract Type:** ${data.contractType}
+**📁 Source Files:** ${data.sourceFiles?.join(', ') || 'None'}
+**🎯 Confidence:** ${Math.round((data.confidence || 0) * 100)}%
+
+**📄 AI-Generated Contract:**
+${data.aiAgentResponse || 'No contract content generated'}
+
+**💡 Next Steps:**
+• Review the generated contract for accuracy
+• Make any necessary edits or adjustments
+• Send for signatures when ready`
 
       case 'document_extract':
         return `**Information Extracted:**
@@ -185,65 +256,7 @@ ${data.results.map((result: any) => `• **${result.fileName}** (${result.releva
     }
   }
 
-  const generateAgentResponse = (userInput: string, context: any): string => {
-    const input = userInput.toLowerCase()
 
-    if (input.includes("available") || input.includes("what") && (input.includes("files") || input.includes("contracts"))) {
-      return `**Available Resources:**
-
-**📁 Files in your system:**
-${context.availableFiles?.map((file: string) => `• ${file}`).join('\n') || '• No files currently available'}
-
-**📄 Contract Templates:**
-${context.availableContracts?.map((contract: string) => `• ${contract}`).join('\n') || '• No contract templates available'}
-
-**💡 What I can do for you:**
-• **"Fill out [contract] using [files]"** - I'll extract info and populate contracts
-• **"Extract information from [files]"** - I'll analyze and organize document data
-• **"Send [contract] for signatures"** - I'll initiate the signature process
-• **"Search for [information]"** - I'll find specific data in your files
-
-Just tell me what you'd like me to do!`
-    }
-
-    if (input.includes("help") || input.includes("what can you do")) {
-      return `**I'm your AI Assistant Agent!** I can actively perform tasks for you:
-
-**🔧 Actions I can perform:**
-• **Fill out contracts** using information from your uploaded files
-• **Extract data** from documents and organize it for you
-• **Send contracts** for review and signatures automatically
-• **Search through** your files to find specific information
-• **Coordinate workflows** between different parts of the system
-
-**💬 Example commands:**
-• *"Fill out the Purchase Agreement using the Johnson's files"*
-• *"Extract all information from the uploaded documents"*
-• *"Send the completed contract for signatures"*
-• *"Search for property details in my files"*
-
-**🎯 Quick Actions:**
-Use the buttons above for common tasks, or just tell me what you'd like me to do in natural language!
-
-I'm here to make your real estate workflow faster and more efficient. What would you like me to help you accomplish?`
-    }
-
-    // Default response for unrecognized questions
-    return `I'm your AI Assistant Agent, and I can help you accomplish tasks automatically!
-
-**🤖 I can perform actions like:**
-• Fill out contracts using your uploaded files
-• Extract and organize information from documents
-• Send contracts for signatures and review
-• Search through your files for specific information
-
-**💡 Try saying something like:**
-• *"Fill out a Purchase Agreement using the Johnson files"*
-• *"Extract information from my uploaded documents"*
-• *"Send this contract for signatures"*
-
-Based on your current context${context?.documentName ? ` working on "${context.documentName}"` : ''} on the ${context?.page || 'current'} page, what would you like me to help you accomplish?`
-  }
 
   const handleQuickAction = (action: QuickAction) => {
     sendMessage(action.prompt)
@@ -287,11 +300,18 @@ Based on your current context${context?.documentName ? ` working on "${context.d
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={togglePanel}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" onClick={clearMessages} title="Clear chat history">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={togglePanel}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
+            </div>
           </CardHeader>
 
           <CardContent className="flex-1 flex flex-col space-y-4 min-h-0 p-4">
