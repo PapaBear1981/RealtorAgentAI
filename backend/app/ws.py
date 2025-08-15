@@ -6,9 +6,10 @@ import json
 import time
 import uuid
 from collections import deque
-from typing import Any, Deque, Dict, Optional
+from typing import Any, Deque, Dict, Optional, Literal
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, ValidationError
 
 from .auth import decode_jwt
 from .agent_runtime import run_agent
@@ -38,6 +39,32 @@ class Connection:
         self.last_recv = time.time()
         self.rate_timestamps: Deque[float] = deque()
         self.session: Optional[Session] = None
+
+
+class WSMessage(BaseModel):
+    jsonrpc: Literal["2.0"]
+    id: Optional[str] = None
+    method: str
+    params: Dict[str, Any] = {}
+
+
+class AckParams(BaseModel):
+    lastSeq: int
+
+
+class AgentRunParams(BaseModel):
+    prompt: str
+    sessionId: Optional[str] = None
+    options: Optional[Dict[str, Any]] = None
+
+
+class CancelParams(BaseModel):
+    jobId: str
+
+
+class ResumeParams(BaseModel):
+    sessionId: str
+    lastSeq: int
 
 
 async def websocket_handler(websocket: WebSocket):
@@ -106,28 +133,65 @@ async def reader(conn: Connection):
             continue
 
         try:
-            msg = json.loads(data)
-        except json.JSONDecodeError:
+            msg_dict = json.loads(data)
+            envelope = WSMessage.model_validate(msg_dict)
+        except (json.JSONDecodeError, ValidationError):
             await conn.send_queue.put({
                 "jsonrpc": "2.0",
-                "error": {"code": -32700, "message": "Invalid JSON"},
+                "error": {"code": -32600, "message": "Invalid request"},
             })
             continue
 
-        method = msg.get("method")
-        msg_id = msg.get("id")
-        params = msg.get("params", {})
+        method = envelope.method
+        msg_id = envelope.id
+        params = envelope.params
 
         if method == "ack":
-            conn.last_ack = max(conn.last_ack, params.get("lastSeq", 0))
+            try:
+                ack = AckParams.model_validate(params)
+            except ValidationError:
+                await conn.send_queue.put({
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "error": {"code": -32602, "message": "Invalid params"},
+                })
+                continue
+            conn.last_ack = max(conn.last_ack, ack.lastSeq)
             continue
 
         if method == "agent.run":
-            await handle_run(conn, msg_id, params)
+            try:
+                run_p = AgentRunParams.model_validate(params)
+            except ValidationError:
+                await conn.send_queue.put({
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "error": {"code": -32602, "message": "Invalid params"},
+                })
+                continue
+            await handle_run(conn, msg_id, run_p)
         elif method == "agent.cancel":
-            await handle_cancel(conn, msg_id, params)
+            try:
+                cancel_p = CancelParams.model_validate(params)
+            except ValidationError:
+                await conn.send_queue.put({
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "error": {"code": -32602, "message": "Invalid params"},
+                })
+                continue
+            await handle_cancel(conn, msg_id, cancel_p)
         elif method == "session.resume":
-            await handle_resume(conn, msg_id, params)
+            try:
+                resume_p = ResumeParams.model_validate(params)
+            except ValidationError:
+                await conn.send_queue.put({
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "error": {"code": -32602, "message": "Invalid params"},
+                })
+                continue
+            await handle_resume(conn, msg_id, resume_p)
         else:
             await conn.send_queue.put({
                 "jsonrpc": "2.0",
@@ -165,8 +229,8 @@ async def heartbeat(conn: Connection):
             break
 
 
-async def handle_run(conn: Connection, msg_id: Optional[str], params: Dict[str, Any]):
-    session_id = params.get("sessionId") or str(uuid.uuid4())
+async def handle_run(conn: Connection, msg_id: Optional[str], params: AgentRunParams):
+    session_id = params.sessionId or str(uuid.uuid4())
     session = sessions.get(session_id)
     if session is None:
         session = Session(session_id)
@@ -180,7 +244,7 @@ async def handle_run(conn: Connection, msg_id: Optional[str], params: Dict[str, 
     })
 
     async def run():
-        async for ev in run_agent(params):
+        async for ev in run_agent(params.model_dump()):
             session.seq += 1
             ev["seq"] = session.seq
             session.buffer.append(ev)
@@ -190,7 +254,7 @@ async def handle_run(conn: Connection, msg_id: Optional[str], params: Dict[str, 
     session.agent_task = asyncio.create_task(run())
 
 
-async def handle_cancel(conn: Connection, msg_id: Optional[str], params: Dict[str, Any]):
+async def handle_cancel(conn: Connection, msg_id: Optional[str], params: CancelParams):
     if conn.session and conn.session.agent_task:
         conn.session.agent_task.cancel()
         await conn.send_queue.put({
@@ -200,9 +264,9 @@ async def handle_cancel(conn: Connection, msg_id: Optional[str], params: Dict[st
         })
 
 
-async def handle_resume(conn: Connection, msg_id: Optional[str], params: Dict[str, Any]):
-    session_id = params.get("sessionId")
-    last_seq = params.get("lastSeq", 0)
+async def handle_resume(conn: Connection, msg_id: Optional[str], params: ResumeParams):
+    session_id = params.sessionId
+    last_seq = params.lastSeq
     session = sessions.get(session_id)
     if not session:
         await conn.send_queue.put({

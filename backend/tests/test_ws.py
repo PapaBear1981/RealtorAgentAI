@@ -29,7 +29,16 @@ ALG = "HS256"
 
 
 def make_token() -> str:
-    return jwt.encode({"sub": "tester"}, SECRET, algorithm=ALG)
+    now = int(time.time())
+    payload = {
+        "sub": "tester",
+        "iss": "realtoragentai",
+        "aud": "realtoragentai",
+        "exp": now + 3600,
+        "iat": now,
+        "nbf": now,
+    }
+    return jwt.encode(payload, SECRET, algorithm=ALG)
 
 
 def test_invalid_token(client):
@@ -71,6 +80,19 @@ def test_oversized_message(client):
         ws.send_text(big)
         msg = ws.receive_json()
         assert msg["error"]["code"] == 4009
+
+
+def test_invalid_params(client):
+    token = make_token()
+    with client.websocket_connect(f"/ws/agent?token={token}") as ws:
+        ws.send_text(json.dumps({
+            "jsonrpc": "2.0",
+            "id": "x",
+            "method": "agent.run",
+            "params": {},
+        }))
+        msg = ws.receive_json()
+        assert msg["error"]["code"] == -32602
 
 
 def test_rate_limit(client):

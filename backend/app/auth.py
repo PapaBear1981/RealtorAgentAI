@@ -8,6 +8,8 @@ import os
 
 JWT_SECRET = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_ISSUER = os.getenv("JWT_ISSUER", "realtoragentai")
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "realtoragentai")
 
 
 def decode_jwt(token: str) -> Dict[str, Any]:
@@ -20,7 +22,8 @@ def decode_jwt(token: str) -> Dict[str, Any]:
             token,
             JWT_SECRET,
             algorithms=[JWT_ALGORITHM],
-            options={"verify_aud": False},
+            audience=JWT_AUDIENCE,
+            issuer=JWT_ISSUER,
         )
         now = datetime.now(timezone.utc)
         if "nbf" in payload and datetime.fromtimestamp(payload["nbf"], timezone.utc) > now:
