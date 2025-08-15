@@ -28,6 +28,7 @@ from .core.security import (
 # Import routers
 from .api import auth, files, contracts, templates, signatures, webhooks, admin, tasks, model_router, agent_orchestrator
 from .api.v1 import ai_agents, ai_agents_ws, advanced_agents, performance, analytics
+from . import ws
 
 # Setup logging
 setup_logging()
@@ -365,6 +366,7 @@ app.include_router(ai_agents_ws.ws_router, prefix="/api/v1", tags=["ai-agents-we
 app.include_router(advanced_agents.router, prefix="/api/v1", tags=["advanced-ai-agents"])
 app.include_router(performance.router, prefix="/api/v1", tags=["performance-optimization"])
 app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+app.include_router(ws.router)
 
 
 if __name__ == "__main__":
